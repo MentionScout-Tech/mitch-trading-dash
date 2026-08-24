@@ -1,7 +1,7 @@
 // API client — talks to Hetzner dash API
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://128-140-102-107.nip.io';
 
-function getToken(): string | null {
+export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('dash_token');
 }
