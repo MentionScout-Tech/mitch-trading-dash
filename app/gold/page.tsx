@@ -1,8 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://128-140-102-107.nip.io';
+import { api } from '../../lib/api';
 
 interface GoldSignal {
   id: string;
@@ -34,19 +33,6 @@ interface GoldStats {
   bySetup: Record<string, { wins: number; losses: number; tracking: number; pl: number }>;
 }
 
-function getToken() {
-  return typeof window !== 'undefined' ? localStorage.getItem('dash_token') : null;
-}
-
-async function apiFetch(path: string) {
-  const token = getToken();
-  const res = await fetch(`${API}${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (res.status === 401) throw new Error('unauthorized');
-  return res.json();
-}
-
 export default function GoldPage() {
   const router = useRouter();
   const [signals, setSignals] = useState<GoldSignal[]>([]);
@@ -60,9 +46,9 @@ export default function GoldPage() {
     if (!token) { router.push('/login'); return; }
 
     Promise.all([
-      apiFetch('/api/gold'),
-      apiFetch('/api/gold/stats'),
-      apiFetch('/api/quote?ticker=GC%3DF'),
+      api('/api/gold'),
+      api('/api/gold/stats'),
+      api('/api/quote?ticker=GC%3DF'),
     ])
       .then(([goldData, statsData, quoteData]) => {
         setSignals(goldData.signals || []);
@@ -70,9 +56,7 @@ export default function GoldPage() {
         setPrice(quoteData.price || null);
         setPriceChange(quoteData.changePercent || null);
       })
-      .catch((e) => {
-        if (e.message === 'unauthorized') router.push('/login');
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [router]);
 
