@@ -29,6 +29,7 @@ export default function Nav() {
     { href: '/stats', label: 'Stats' },
     { href: '/chart', label: 'Charts' },
     { href: '/whales', label: 'Whales' },
+    { href: '/leap', label: 'LEAP' },
     { href: '/cron-history', label: 'Cron History' },
     { href: '/backtest', label: 'Backtest' },
     { href: '/gold', label: 'Gold' }
