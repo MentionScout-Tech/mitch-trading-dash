@@ -1,0 +1,428 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { api } from '../../lib/api';
+
+interface Conditions {
+  trend: string;
+  trendStrength: number;
+  bias: string;
+  vwap: number | null;
+  sma20: number | null;
+  rangeHigh: number | null;
+  rangeLow: number | null;
+  rangePct: number;
+  momentum: number;
+  priceVsVwap: number;
+  aboveVwap: boolean;
+  aboveSma20: boolean;
+  barsAnalyzed: number;
+}
+
+interface CreditSpread {
+  type: string;
+  shortStrike: number;
+  longStrike: number;
+  shortDelta: number;
+  credit: number;
+  maxRisk: number;
+  creditPct: number;
+  rrRatio: number;
+  distFromPrice: number;
+  distPct: number;
+  emMultiple: number;
+  shortOI: number;
+  shortVol: number;
+  score: number;
+}
+
+interface IronCondor {
+  type: string;
+  putShortStrike: number;
+  putLongStrike: number;
+  callShortStrike: number;
+  callLongStrike: number;
+  putCredit: number;
+  callCredit: number;
+  combinedCredit: number;
+  maxRisk: number;
+  creditPct: number;
+  rrRatio: number;
+  putDelta: number;
+  callDelta: number;
+  putEMMultiple: number;
+  callEMMultiple: number;
+  score: number;
+}
+
+interface TodaySignal {
+  key: string;
+  type: string;
+  timestamp: string;
+  spxPrice: number;
+  score: number;
+  shortStrike?: number;
+  longStrike?: number;
+  putShortStrike?: number;
+  callShortStrike?: number;
+  credit?: number;
+  combinedCredit?: number;
+  currentSpx: number | null;
+  pnl: number | null;
+}
+
+interface HistoryEntry {
+  date: string;
+  time: string;
+  spxPrice: number;
+  vix: number;
+  expectedMove: number;
+  bias: string;
+  trendStrength: number;
+  alertsSent: number;
+  topSpreadScore: number;
+  topCondorScore: number;
+}
+
+interface SpxData {
+  live: {
+    spxPrice: number | null;
+    spxChange: number | null;
+    spxChangePct: number | null;
+    vix: number | null;
+    vixChange: number | null;
+    expectedMove: number | null;
+  };
+  conditions: Conditions | null;
+  lastScan: {
+    timestamp: string;
+    topCreditSpreads: CreditSpread[];
+    topIronCondors: IronCondor[];
+    alertsSent: number;
+  } | null;
+  lastRun: string | null;
+  todaySignals: TodaySignal[];
+  stats: {
+    totalScans: number;
+    totalAlerts: number;
+    avgAlertsPerDay: number;
+  };
+  history: HistoryEntry[];
+}
+
+function fmt(n: number | null | undefined, d = 2): string {
+  if (n == null) return '—';
+  return n.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+function timeAgo(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function biasColor(bias: string): string {
+  if (bias === 'bullish') return 'text-green-400';
+  if (bias === 'bearish') return 'text-red-400';
+  return 'text-yellow-300';
+}
+
+function biasEmoji(bias: string): string {
+  if (bias === 'bullish') return '📈';
+  if (bias === 'bearish') return '📉';
+  return '⚖️';
+}
+
+function scoreColor(score: number): string {
+  if (score >= 80) return 'text-green-400 font-bold';
+  if (score >= 60) return 'text-lime-300';
+  if (score >= 40) return 'text-yellow-300';
+  return 'text-muted';
+}
+
+export default function Spx0dtePage() {
+  const router = useRouter();
+  const [data, setData] = useState<SpxData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('dash_token')) {
+      router.push('/login');
+    }
+  }, []);
+
+  useEffect(() => { load(); }, []);
+
+  async function load() {
+    setLoading(true);
+    setErr('');
+    try {
+      const d = await api('/api/spx-0dte');
+      setData(d);
+    } catch (e: any) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const live = data?.live;
+  const cond = data?.conditions;
+  const scan = data?.lastScan;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">⚡ SPX 0DTE Scanner</h1>
+        <div className="flex items-center gap-3">
+          {data?.lastRun && (
+            <span className="text-xs text-muted">Last scan: {timeAgo(data.lastRun)}</span>
+          )}
+          <button onClick={load} className="text-sm bg-panel border border-border px-3 py-1.5 rounded hover:bg-panel2">
+            🔄 Refresh
+          </button>
+        </div>
+      </div>
+
+      {err && <div className="bg-red-500/10 border border-red-500 text-red-400 p-3 rounded mb-4">{err}</div>}
+
+      {loading && <div className="text-muted py-8 text-center">Loading SPX 0DTE data...</div>}
+
+      {!loading && data && (
+        <>
+          {/* Live Market Strip */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
+            <StatCard label="SPX" value={live?.spxPrice ? `$${fmt(live.spxPrice)}` : '—'}
+              sub={live?.spxChangePct != null ? `${live.spxChangePct >= 0 ? '+' : ''}${fmt(live.spxChangePct)}%` : undefined}
+              subColor={live?.spxChangePct != null ? (live.spxChangePct >= 0 ? 'text-green-400' : 'text-red-400') : undefined} />
+            <StatCard label="VIX" value={live?.vix ? fmt(live.vix, 1) : '—'}
+              sub={live?.vixChange != null ? `${live.vixChange >= 0 ? '+' : ''}${fmt(live.vixChange, 1)}` : undefined}
+              subColor={live?.vixChange != null ? (live.vixChange >= 0 ? 'text-red-400' : 'text-green-400') : undefined} />
+            <StatCard label="Expected Move" value={live?.expectedMove ? `±$${fmt(live.expectedMove)}` : '—'} />
+            <StatCard label="Bias" value={cond ? `${biasEmoji(cond.bias)} ${cond.bias.toUpperCase()}` : '—'}
+              color={cond ? biasColor(cond.bias) : undefined} />
+            <StatCard label="Trend Strength" value={cond ? `${cond.trendStrength}/100` : '—'}
+              color={cond ? (cond.trendStrength >= 50 ? 'text-green-400' : cond.trendStrength >= 30 ? 'text-yellow-300' : 'text-muted') : undefined} />
+            <StatCard label="Today Alerts" value={String(data.todaySignals.length)} />
+          </div>
+
+          {/* Market Conditions */}
+          {cond && (
+            <div className="bg-panel border border-border rounded-lg p-4 mb-6">
+              <h2 className="text-sm font-semibold text-muted mb-3">📊 Market Conditions</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-muted">VWAP: </span>
+                  <span className="font-mono">${fmt(cond.vwap)}</span>
+                  <span className={`ml-1 text-xs ${cond.aboveVwap ? 'text-green-400' : 'text-red-400'}`}>
+                    {cond.aboveVwap ? '▲ above' : '▼ below'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted">SMA20: </span>
+                  <span className="font-mono">${fmt(cond.sma20)}</span>
+                  <span className={`ml-1 text-xs ${cond.aboveSma20 ? 'text-green-400' : 'text-red-400'}`}>
+                    {cond.aboveSma20 ? '▲ above' : '▼ below'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted">Range: </span>
+                  <span className="font-mono">${fmt(cond.rangeLow)} – ${fmt(cond.rangeHigh)}</span>
+                  <span className="text-muted text-xs ml-1">({fmt(cond.rangePct, 3)}%)</span>
+                </div>
+                <div>
+                  <span className="text-muted">Momentum: </span>
+                  <span className={`font-mono ${cond.momentum >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {cond.momentum >= 0 ? '+' : ''}{fmt(cond.momentum, 4)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Today's Alerts */}
+          {data.todaySignals.length > 0 && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-3">🔔 Today&apos;s Alerts</h2>
+              <div className="space-y-3">
+                {data.todaySignals.map((s, i) => (
+                  <div key={i} className="bg-panel border border-border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">
+                          {s.type === 'iron_condor' ? '🦅' : s.type === 'put_credit' ? '🟢' : '🔴'}
+                        </span>
+                        <span className="font-bold">
+                          {s.type === 'iron_condor' ? 'Iron Condor' :
+                           s.type === 'put_credit' ? 'Put Credit Spread' : 'Call Credit Spread'}
+                        </span>
+                        <span className={`text-sm ${scoreColor(s.score)}`}>Score: {s.score}</span>
+                      </div>
+                      <span className="text-xs text-muted">{timeAgo(s.timestamp)}</span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                      {s.type === 'iron_condor' ? (
+                        <>
+                          <div><span className="text-muted">Put side:</span> {s.putShortStrike}P / {(s.putShortStrike || 0) - 5}P</div>
+                          <div><span className="text-muted">Call side:</span> {s.callShortStrike}C / {(s.callShortStrike || 0) + 5}C</div>
+                          <div><span className="text-muted">Credit:</span> <span className="text-green-400 font-mono">${fmt(s.combinedCredit)}</span></div>
+                        </>
+                      ) : (
+                        <>
+                          <div><span className="text-muted">Strikes:</span> {s.shortStrike} / {s.longStrike}</div>
+                          <div><span className="text-muted">Credit:</span> <span className="text-green-400 font-mono">${fmt(s.credit)}</span></div>
+                        </>
+                      )}
+                      <div>
+                        <span className="text-muted">SPX at alert:</span> <span className="font-mono">${fmt(s.spxPrice)}</span>
+                        {s.pnl != null && (
+                          <span className={`ml-2 text-xs ${s.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            ({s.pnl >= 0 ? '+' : ''}{fmt(s.pnl)} pts since)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Top Setups from Last Scan */}
+          {scan && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {/* Credit Spreads */}
+              <div className="bg-panel border border-border rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-muted mb-3">💰 Top Credit Spreads</h3>
+                {(scan.topCreditSpreads?.length || 0) === 0 ? (
+                  <div className="text-muted text-sm py-4 text-center">No qualifying spreads found</div>
+                ) : (
+                  <div className="space-y-2">
+                    {scan.topCreditSpreads.map((s, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-border/50 last:border-0">
+                        <div className="flex items-center gap-2">
+                          <span>{s.type === 'put_credit' ? '🟢' : '🔴'}</span>
+                          <span className="font-mono">{s.shortStrike}/{s.longStrike}</span>
+                          <span className="text-xs text-muted">{s.type === 'put_credit' ? 'PUT' : 'CALL'}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="text-green-400 font-mono">${fmt(s.credit)}</span>
+                          <span className="text-muted">{s.creditPct}%</span>
+                          <span className="text-muted">Δ{(s.shortDelta * 100).toFixed(0)}%</span>
+                          <span className="text-muted">{s.emMultiple}x EM</span>
+                          <span className={scoreColor(s.score)}>{s.score}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Iron Condors */}
+              <div className="bg-panel border border-border rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-muted mb-3">🦅 Top Iron Condors</h3>
+                {(scan.topIronCondors?.length || 0) === 0 ? (
+                  <div className="text-muted text-sm py-4 text-center">No qualifying condors found (need neutral bias + first hour passed)</div>
+                ) : (
+                  <div className="space-y-2">
+                    {scan.topIronCondors.map((c, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-border/50 last:border-0">
+                        <div className="flex items-center gap-2">
+                          <span>🦅</span>
+                          <span className="font-mono text-xs">
+                            {c.putShortStrike}P / {c.callShortStrike}C
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="text-green-400 font-mono">${fmt(c.combinedCredit)}</span>
+                          <span className="text-muted">{c.creditPct}%</span>
+                          <span className="text-muted">R:R {c.rrRatio}</span>
+                          <span className={scoreColor(c.score)}>{c.score}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Scan History */}
+          {data.history.length > 0 && (
+            <div className="bg-panel border border-border rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-muted mb-3">📅 Scan History (Last 30 Days)</h3>
+              <div className="flex items-center gap-4 text-sm mb-3">
+                <StatMini label="Total Scans" value={String(data.stats.totalScans)} />
+                <StatMini label="Total Alerts" value={String(data.stats.totalAlerts)} />
+                <StatMini label="Avg/Day" value={fmt(data.stats.avgAlertsPerDay, 1)} />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-muted text-left text-xs">
+                      <th className="py-1.5 px-2">Date</th>
+                      <th className="py-1.5 px-2 text-right">SPX</th>
+                      <th className="py-1.5 px-2 text-right">VIX</th>
+                      <th className="py-1.5 px-2 text-right">EM</th>
+                      <th className="py-1.5 px-2">Bias</th>
+                      <th className="py-1.5 px-2 text-right">Strength</th>
+                      <th className="py-1.5 px-2 text-right">Alerts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.history.map((h, i) => (
+                      <tr key={i} className="border-b border-border/30 text-xs">
+                        <td className="py-1.5 px-2 text-muted">{h.time ? timeAgo(h.time) : h.date}</td>
+                        <td className="py-1.5 px-2 text-right font-mono">${fmt(h.spxPrice)}</td>
+                        <td className="py-1.5 px-2 text-right font-mono">{fmt(h.vix, 1)}</td>
+                        <td className="py-1.5 px-2 text-right font-mono">±${fmt(h.expectedMove)}</td>
+                        <td className={`py-1.5 px-2 ${biasColor(h.bias)}`}>
+                          {biasEmoji(h.bias)} {h.bias}
+                        </td>
+                        <td className="py-1.5 px-2 text-right">{h.trendStrength}</td>
+                        <td className="py-1.5 px-2 text-right">
+                          {h.alertsSent > 0 ? <span className="text-accent font-bold">{h.alertsSent}</span> : <span className="text-muted">0</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Disclaimer */}
+          <div className="text-xs text-muted mt-6 text-center">
+            ⚠️ 0DTE options carry extreme gamma risk. Informational only — not financial advice. Size small.
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function StatCard({ label, value, sub, color = 'text-text', subColor }: {
+  label: string; value: string; color?: string; sub?: string; subColor?: string;
+}) {
+  return (
+    <div className="bg-panel border border-border rounded-lg p-3">
+      <div className="text-xs text-muted">{label}</div>
+      <div className={`text-lg font-bold ${color}`}>{value}</div>
+      {sub && <div className={`text-xs ${subColor || 'text-muted'}`}>{sub}</div>}
+    </div>
+  );
+}
+
+function StatMini({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span className="text-muted">{label}: </span>
+      <span className="font-semibold">{value}</span>
+    </div>
+  );
+}

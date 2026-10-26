@@ -30,6 +30,9 @@ export default function Nav() {
     { href: '/chart', label: 'Charts' },
     { href: '/whales', label: 'Whales' },
     { href: '/leap', label: 'LEAP' },
+    { href: '/whale-wheel', label: 'Whale Wheel' },
+    { href: '/options-flow', label: 'Options Flow' },
+    { href: '/spx-0dte', label: 'SPX 0DTE' },
     { href: '/cron-history', label: 'Cron History' },
     { href: '/backtest', label: 'Backtest' },
     { href: '/gold', label: 'Gold' }
