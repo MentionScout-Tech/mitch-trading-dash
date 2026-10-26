@@ -20,6 +20,8 @@ interface LeapSignal {
   whaleCount: number;
   whales: string[];
   currentPrice: number | null;
+  pnlStatus?: 'green' | 'yellow' | null;
+  hit10?: boolean;
 }
 
 interface ScanResult {
@@ -93,9 +95,31 @@ function SortHeader({ label, field, sortField, sortDir, onSort }: {
   );
 }
 
-function SignalCard({ signal }: { signal: LeapSignal }) {
+function pnlColor(pct: number): string {
+  if (pct > 0) return 'text-green-400';
+  if (pct < 0) return 'text-red-400';
+  return 'text-muted';
+}
+
+function pnlBg(pct: number, pnlStatus?: string | null): string {
+  if (pnlStatus === 'green') return 'bg-green-500/25 border-green-400/50 ring-1 ring-green-400/30';
+  if (pnlStatus === 'yellow') return 'bg-yellow-500/20 border-yellow-400/40';
+  if (pct >= 5) return 'bg-green-500/15 border-green-500/30';
+  if (pct > 0) return 'bg-green-500/10 border-green-500/20';
+  if (pct <= -5) return 'bg-red-500/15 border-red-500/30';
+  if (pct < 0) return 'bg-red-500/10 border-red-500/20';
+  return 'bg-panel2 border-border';
+}
+
+function SignalCard({ signal, showPnl }: { signal: LeapSignal; showPnl?: boolean }) {
+  const pnlPct = signal.currentPrice && signal.entryPrice
+    ? ((signal.currentPrice - signal.entryPrice) / signal.entryPrice) * 100
+    : null;
+
   return (
-    <div className="bg-panel border border-accent/40 rounded-lg p-5 shadow-lg hover:border-accent/70 transition-colors">
+    <div className={`bg-panel border rounded-lg p-5 shadow-lg transition-colors ${
+      showPnl && pnlPct !== null ? pnlBg(pnlPct, signal.pnlStatus) : 'border-accent/40 hover:border-accent/70'
+    }`}>
       {/* Header row: Ticker + Score */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -107,14 +131,32 @@ function SignalCard({ signal }: { signal: LeapSignal }) {
             🐋 {signal.whaleCount}
           </span>
         </div>
+        {/* P&L badge */}
+        {showPnl && pnlPct !== null && (
+          <div className="flex items-center gap-2">
+            {signal.pnlStatus === 'green' && <span className="text-xs font-bold bg-green-500/30 text-green-300 px-2 py-0.5 rounded border border-green-400/40">🎯 10%+</span>}
+            {signal.pnlStatus === 'yellow' && <span className="text-xs font-bold bg-yellow-500/30 text-yellow-300 px-2 py-0.5 rounded border border-yellow-400/40">⚡ 5%+</span>}
+            <span className={`text-lg font-bold ${pnlColor(pnlPct)}`}>
+              {pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}%
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Entry info */}
-      <div className="flex items-center gap-4 mb-3 text-sm">
+      {/* Entry + Current price info */}
+      <div className="flex items-center gap-4 mb-3 text-sm flex-wrap">
         <div>
           <span className="text-muted">Entry: </span>
           <span className="font-semibold text-text">${signal.entryPrice.toFixed(2)}</span>
         </div>
+        {signal.currentPrice !== null && (
+          <div>
+            <span className="text-muted">Now: </span>
+            <span className={`font-semibold ${pnlPct !== null ? pnlColor(pnlPct) : 'text-text'}`}>
+              ${signal.currentPrice.toFixed(2)}
+            </span>
+          </div>
+        )}
         <div>
           <span className="text-muted">Date: </span>
           <span className="text-text">{formatDate(signal.entryDate)}</span>
@@ -226,9 +268,20 @@ export default function LeapPage() {
     return list;
   }, [filteredWatchlist, sortField, sortDir, scanScores]);
 
-  const sortedSignals = useMemo(() => {
-    if (!data) return [];
-    return [...data.signals].sort((a, b) => b.score - a.score);
+  /* Split signals into active (last 14 days) and past */
+  const { activeSignals, pastSignals } = useMemo(() => {
+    if (!data) return { activeSignals: [], pastSignals: [] };
+    const cutoff = Date.now() - 14 * 86400000;
+    const active: LeapSignal[] = [];
+    const past: LeapSignal[] = [];
+    for (const s of data.signals) {
+      const entryMs = new Date(s.entryDate).getTime();
+      if (entryMs > cutoff) active.push(s);
+      else past.push(s);
+    }
+    active.sort((a, b) => b.score - a.score);
+    past.sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
+    return { activeSignals: active, pastSignals: past };
   }, [data]);
 
   if (loading) return <div className="text-muted p-8">Loading LEAP scanner data...</div>;
@@ -252,23 +305,84 @@ export default function LeapPage() {
       </div>
 
       {/* ── Active Signals ──────────────────────────── */}
-      {sortedSignals.length > 0 && (
+      {activeSignals.length > 0 && (
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             🎯 Active Signals
-            <span className="text-sm font-normal text-muted">({sortedSignals.length} position{sortedSignals.length !== 1 ? 's' : ''})</span>
+            <span className="text-sm font-normal text-muted">({activeSignals.length} position{activeSignals.length !== 1 ? 's' : ''})</span>
           </h2>
           <div className="grid gap-4 md:grid-cols-2">
-            {sortedSignals.map((signal) => (
-              <SignalCard key={signal.ticker} signal={signal} />
+            {activeSignals.map((signal) => (
+              <SignalCard key={signal.ticker + signal.entryDate} signal={signal} showPnl />
             ))}
           </div>
         </div>
       )}
 
-      {sortedSignals.length === 0 && (
+      {activeSignals.length === 0 && (
         <div className="mb-8 bg-panel border border-border rounded-lg p-6 text-center">
           <div className="text-muted text-sm">No active signals. The LEAP scanner will surface high-conviction setups when catalysts align with whale holdings.</div>
+        </div>
+      )}
+
+      {/* ── Past Signals (History + P&L) ────────────── */}
+      {pastSignals.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            📜 Signal History
+            <span className="text-sm font-normal text-muted">
+              ({pastSignals.length} past signal{pastSignals.length !== 1 ? 's' : ''})
+            </span>
+          </h2>
+          <div className="bg-panel border border-border rounded-lg overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-panel2 border-b border-border text-muted">
+                <tr>
+                  <th className="px-3 py-2 text-left">Ticker</th>
+                  <th className="px-3 py-2 text-left">Date</th>
+                  <th className="px-3 py-2 text-right">Entry</th>
+                  <th className="px-3 py-2 text-right">Current</th>
+                  <th className="px-3 py-2 text-right">P&L</th>
+                  <th className="px-3 py-2 text-center">Score</th>
+                  <th className="px-3 py-2 text-center">Whales</th>
+                  <th className="px-3 py-2 text-left">Catalysts</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pastSignals.map((s, i) => {
+                  const pnlPct = s.currentPrice && s.entryPrice
+                    ? ((s.currentPrice - s.entryPrice) / s.entryPrice) * 100
+                    : null;
+                  return (
+                    <tr key={s.ticker + s.entryDate + i} className={`border-t border-border hover:bg-panel2/50 ${
+                      pnlPct !== null && pnlPct >= 0 ? 'bg-green-500/5' : pnlPct !== null ? 'bg-red-500/5' : ''
+                    }`}>
+                      <td className="px-3 py-2 font-bold">{s.ticker}</td>
+                      <td className="px-3 py-2 text-muted">{formatDate(s.entryDate)}</td>
+                      <td className="px-3 py-2 text-right font-mono">${s.entryPrice.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right font-mono">
+                        {s.currentPrice !== null ? `$${s.currentPrice.toFixed(2)}` : '—'}
+                      </td>
+                      <td className={`px-3 py-2 text-right font-bold ${
+                        pnlPct !== null ? pnlColor(pnlPct) : 'text-muted'
+                      }`}>
+                        {pnlPct !== null ? `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%` : '—'}
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <span className={`${scoreColor(s.score)} font-bold`}>{s.score}</span>
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <span className="text-accent">🐋 {s.whaleCount}</span>
+                      </td>
+                      <td className="px-3 py-2 text-xs text-muted max-w-xs truncate">
+                        {s.catalysts.slice(0, 3).join(' · ')}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
