@@ -32,6 +32,7 @@ interface WheelSignal {
   hit10?: boolean;
   avgWhaleEntry: number | null;
   whaleEntries: WhaleEntry[];
+  iv: number | null;
 }
 
 interface ScanResult {
@@ -193,6 +194,14 @@ function SignalCard({ signal, showPnl }: { signal: WheelSignal; showPnl?: boolea
             <span className="text-muted">RSI: </span>
             <span className={`font-semibold ${Number(rsi) <= 30 ? 'text-red-400' : Number(rsi) <= 40 ? 'text-orange-300' : 'text-text'}`}>
               {rsi}
+            </span>
+          </div>
+        )}
+        {signal.iv != null && (
+          <div>
+            <span className="text-muted">IV: </span>
+            <span className={`font-semibold ${signal.iv >= 60 ? 'text-red-400' : signal.iv >= 40 ? 'text-orange-300' : 'text-purple-400'}`}>
+              {signal.iv.toFixed(1)}%
             </span>
           </div>
         )}
