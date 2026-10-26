@@ -5,10 +5,18 @@ import { api } from '../../lib/api';
 
 /* ── Types ─────────────────────────────────────────────── */
 
+interface WhaleEntry {
+  whale: string;
+  entryPrice: number;
+  shares: number;
+}
+
 interface WhaleApproved {
   ticker: string;
   whaleCount: number;
   whales: string[];
+  avgWhaleEntry: number | null;
+  whaleEntries: WhaleEntry[];
 }
 
 interface WheelSignal {
@@ -22,6 +30,8 @@ interface WheelSignal {
   currentPrice: number | null;
   pnlStatus?: 'green' | 'yellow' | null;
   hit10?: boolean;
+  avgWhaleEntry: number | null;
+  whaleEntries: WhaleEntry[];
 }
 
 interface ScanResult {
@@ -208,6 +218,27 @@ function SignalCard({ signal, showPnl }: { signal: WheelSignal; showPnl?: boolea
           ))}
         </div>
       </div>
+
+      {/* Avg Whale Entry */}
+      {signal.avgWhaleEntry != null && signal.avgWhaleEntry > 0 && (
+        <div className="flex items-center gap-3 mb-3 text-sm">
+          <div>
+            <span className="text-muted">Avg Whale Entry: </span>
+            <span className="font-semibold text-blue-400">${signal.avgWhaleEntry.toFixed(2)}</span>
+          </div>
+          {signal.currentPrice != null && (() => {
+            const diff = ((signal.currentPrice - signal.avgWhaleEntry!) / signal.avgWhaleEntry!) * 100;
+            return (
+              <div className="flex items-center gap-1.5">
+                <span>{diff >= 0 ? '🟢' : '🔴'}</span>
+                <span className={`font-semibold ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {diff >= 0 ? '+' : ''}{diff.toFixed(1)}% vs whale cost
+                </span>
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* Whale names */}
       <div className="text-xs text-muted">
@@ -474,6 +505,7 @@ export default function WhaleWheelPage() {
               <SortHeader label="Ticker" field="ticker" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
               <SortHeader label="# Whales" field="whales" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
               <SortHeader label="Wheel Score" field="score" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
+              <th className="px-3 py-2 text-right">Avg Whale Entry</th>
               <th className="px-3 py-2 text-left">Status</th>
               <th className="px-3 py-2 text-left">Backed By</th>
             </tr>
@@ -492,6 +524,13 @@ export default function WhaleWheelPage() {
                   <td className="px-3 py-2 text-center">
                     {score > 0 ? (
                       <span className={`${scoreColor(score)} font-bold`}>{score}</span>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-right font-mono">
+                    {w.avgWhaleEntry != null && w.avgWhaleEntry > 0 ? (
+                      <span className="text-blue-400">${w.avgWhaleEntry.toFixed(2)}</span>
                     ) : (
                       <span className="text-muted">—</span>
                     )}
