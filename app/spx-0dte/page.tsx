@@ -210,11 +210,14 @@ function strikeDisplay(s: SignalHistoryEntry): string {
   return `${s.shortStrike}/${s.longStrike}`;
 }
 
+const CONTRACT_OPTIONS = [1, 2, 3, 5, 10, 15, 20];
+
 export default function Spx0dtePage() {
   const router = useRouter();
   const [data, setData] = useState<SpxData | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
+  const [contracts, setContracts] = useState(1);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem('dash_token')) {
@@ -252,6 +255,18 @@ export default function Spx0dtePage() {
           <button onClick={load} className="text-sm bg-panel border border-border px-3 py-1.5 rounded hover:bg-panel2">
             🔄 Refresh
           </button>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-muted">Contracts:</label>
+            <select
+              value={contracts}
+              onChange={e => setContracts(Number(e.target.value))}
+              className="text-sm bg-panel border border-border px-2 py-1.5 rounded hover:bg-panel2 text-text"
+            >
+              {CONTRACT_OPTIONS.map(n => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -371,6 +386,7 @@ export default function Spx0dtePage() {
                     title="💰 Credit Spread Settlement History"
                     entries={csHistory}
                     showType={true}
+                    contracts={contracts}
                   />
                 )}
 
@@ -380,6 +396,7 @@ export default function Spx0dtePage() {
                     title="🦅 Iron Condor Settlement History"
                     entries={icHistory}
                     showType={false}
+                    contracts={contracts}
                   />
                 )}
               </>
@@ -520,13 +537,15 @@ function StatMini({ label, value }: { label: string; value: string }) {
   );
 }
 
-function HistorySection({ title, entries, showType }: {
-  title: string; entries: SignalHistoryEntry[]; showType: boolean;
+function HistorySection({ title, entries, showType, contracts }: {
+  title: string; entries: SignalHistoryEntry[]; showType: boolean; contracts: number;
 }) {
   const wins = entries.filter(s => s.result === 'win').length;
   const losses = entries.filter(s => s.result === 'loss').length;
   const partials = entries.filter(s => s.result === 'partial').length;
   const totalPnl = entries.reduce((sum, s) => sum + s.pnlPerContract, 0);
+  const winTotal = entries.filter(s => s.pnlPerContract > 0).reduce((sum, s) => sum + s.pnlPerContract, 0);
+  const lossTotal = entries.filter(s => s.pnlPerContract < 0).reduce((sum, s) => sum + s.pnlPerContract, 0);
   const winRate = entries.length > 0 ? +((wins / entries.length) * 100).toFixed(1) : 0;
   const credits = entries.map(s => s.type === 'iron_condor' ? (s.combinedCredit || 0) : (s.credit || 0));
   const avgCredit = credits.length > 0 ? credits.reduce((a, b) => a + b, 0) / credits.length : 0;
@@ -537,21 +556,27 @@ function HistorySection({ title, entries, showType }: {
     <div className="mb-6">
       <h2 className="text-lg font-semibold mb-3">{title}</h2>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-4">
         <StatCard label="Trades" value={String(entries.length)} />
-        <StatCard label="Wins" value={String(wins)} color="text-green-400" />
-        <StatCard label="Losses" value={String(losses)} color="text-red-400" />
+        <StatCard label={`Wins (${wins})`}
+          value={`+$${fmt(winTotal * contracts)}`}
+          color="text-green-400"
+          sub={contracts > 1 ? `$${fmt(winTotal)}/ct` : undefined} />
+        <StatCard label={`Losses (${losses})`}
+          value={`-$${fmt(Math.abs(lossTotal) * contracts)}`}
+          color="text-red-400"
+          sub={contracts > 1 ? `-$${fmt(Math.abs(lossTotal))}/ct` : undefined} />
+        <StatCard label="Net Profit"
+          value={`${totalPnl >= 0 ? '+' : '-'}$${fmt(Math.abs(totalPnl) * contracts)}`}
+          color={totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}
+          sub={contracts > 1 ? `${totalPnl >= 0 ? '+' : ''}$${fmt(totalPnl)}/ct` : 'per contract'} />
         <StatCard label="Win Rate"
           value={`${winRate}%`}
           color={winRate >= 50 ? 'text-green-400' : 'text-red-400'} />
-        <StatCard label="Total P&L"
-          value={`$${fmt(totalPnl)}`}
-          color={totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}
-          sub="per contract" />
-        <StatCard label="Avg Credit" value={`$${fmt(avgCredit)}`} />
-        <StatCard label="Best / Worst"
-          value={`+$${fmt(bestTrade)} / $${fmt(worstTrade)}`}
-          color={totalPnl >= 0 ? 'text-green-400' : 'text-red-400'} />
+        <StatCard label="Avg Credit" value={`$${fmt(avgCredit * contracts)}`}
+          sub={contracts > 1 ? `$${fmt(avgCredit)}/ct` : undefined} />
+        <StatCard label="Best Trade" value={`+$${fmt(bestTrade * contracts)}`} color="text-green-400" />
+        <StatCard label="Worst Trade" value={`-$${fmt(Math.abs(worstTrade) * contracts)}`} color="text-red-400" />
       </div>
 
       <div className="bg-panel border border-border rounded-lg p-4">
@@ -584,7 +609,8 @@ function HistorySection({ title, entries, showType }: {
                     <td className="py-2 px-2 text-right font-mono">${fmt(s.spxClose)}</td>
                     <td className="py-2 px-2 text-center">{resultBadge(s.result)}</td>
                     <td className={`py-2 px-2 text-right font-mono font-semibold ${s.pnlPerContract >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {s.pnlPerContract >= 0 ? '+' : ''}{fmt(s.pnlPerContract)} ({s.pnlPct}%)
+                      {s.pnlPerContract >= 0 ? '+' : ''}{fmt(s.pnlPerContract * contracts)}
+                      {contracts === 1 && <span className="text-muted font-normal"> ({s.pnlPct}%)</span>}
                     </td>
                   </tr>
                 );
