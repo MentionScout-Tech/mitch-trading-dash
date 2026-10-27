@@ -189,7 +189,7 @@ function resultRowClass(result: string): string {
   return '';
 }
 
-function resultBadge(result: string): JSX.Element {
+function resultBadge(result: string): React.ReactNode {
   const colors: Record<string, string> = {
     win: 'bg-green-500/20 text-green-400',
     loss: 'bg-red-500/20 text-red-400',
