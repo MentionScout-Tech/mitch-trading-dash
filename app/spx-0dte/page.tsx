@@ -359,78 +359,32 @@ export default function Spx0dtePage() {
             </div>
           )}
 
-          {/* Signal History Stats + Table */}
-          {(data.signalHistory?.length > 0 || data.signalStats?.total > 0) && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-3">📊 Signal Settlement History</h2>
+          {/* Signal History — split by strategy */}
+          {data.signalHistory?.length > 0 && (() => {
+            const csHistory = data.signalHistory.filter(s => s.type !== 'iron_condor');
+            const icHistory = data.signalHistory.filter(s => s.type === 'iron_condor');
+            return (
+              <>
+                {/* Credit Spreads History */}
+                {csHistory.length > 0 && (
+                  <HistorySection
+                    title="💰 Credit Spread Settlement History"
+                    entries={csHistory}
+                    showType={true}
+                  />
+                )}
 
-              {/* Stats Bar */}
-              {data.signalStats && data.signalStats.total > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-4">
-                  <StatCard label="Total Trades" value={String(data.signalStats.total)} />
-                  <StatCard label="Wins" value={String(data.signalStats.wins)} color="text-green-400" />
-                  <StatCard label="Losses" value={String(data.signalStats.losses)} color="text-red-400" />
-                  <StatCard label="Win Rate"
-                    value={`${data.signalStats.winRate}%`}
-                    color={data.signalStats.winRate >= 50 ? 'text-green-400' : 'text-red-400'} />
-                  <StatCard label="Total P&L"
-                    value={`$${fmt(data.signalStats.totalPnl)}`}
-                    color={data.signalStats.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}
-                    sub="per contract" />
-                  <StatCard label="Avg Credit" value={`$${fmt(data.signalStats.avgCredit)}`} />
-                  <StatCard label="Best Trade" value={`+$${fmt(data.signalStats.bestTrade)}`} color="text-green-400" />
-                  <StatCard label="Worst Trade" value={`$${fmt(data.signalStats.worstTrade)}`} color="text-red-400" />
-                </div>
-              )}
-
-              {/* History Table */}
-              {data.signalHistory?.length > 0 && (
-                <div className="bg-panel border border-border rounded-lg p-4">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border text-muted text-left text-xs">
-                          <th className="py-2 px-2">Date</th>
-                          <th className="py-2 px-2">Type</th>
-                          <th className="py-2 px-2">Strikes</th>
-                          <th className="py-2 px-2 text-right">Credit</th>
-                          <th className="py-2 px-2 text-right">SPX @ Alert</th>
-                          <th className="py-2 px-2 text-right">SPX Close</th>
-                          <th className="py-2 px-2 text-center">Result</th>
-                          <th className="py-2 px-2 text-right">P&L</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.signalHistory.map((s, i) => {
-                          const credit = s.type === 'iron_condor' ? s.combinedCredit : s.credit;
-                          const typeLabel = s.type === 'iron_condor' ? '🦅 IC' : s.type === 'put_credit' ? '🟢 Put CS' : '🔴 Call CS';
-                          const dateStr = new Date(s.settledAt || s.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-                          return (
-                            <tr key={i} className={`text-xs ${resultRowClass(s.result)} ${
-                              s.result === 'win' ? 'border-l-2 border-l-green-500/60' :
-                              s.result === 'loss' ? 'border-l-2 border-l-red-500/60' :
-                              'border-l-2 border-l-yellow-500/60'
-                            }`}>
-                              <td className="py-2 px-2 text-muted">{dateStr}</td>
-                              <td className="py-2 px-2 whitespace-nowrap">{typeLabel}</td>
-                              <td className="py-2 px-2 font-mono whitespace-nowrap">{strikeDisplay(s)}</td>
-                              <td className="py-2 px-2 text-right font-mono text-green-400">${fmt(credit)}</td>
-                              <td className="py-2 px-2 text-right font-mono">${fmt(s.spxPrice)}</td>
-                              <td className="py-2 px-2 text-right font-mono">${fmt(s.spxClose)}</td>
-                              <td className="py-2 px-2 text-center">{resultBadge(s.result)}</td>
-                              <td className={`py-2 px-2 text-right font-mono font-semibold ${s.pnlPerContract >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                {s.pnlPerContract >= 0 ? '+' : ''}{fmt(s.pnlPerContract)} ({s.pnlPct}%)
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+                {/* Iron Condor History */}
+                {icHistory.length > 0 && (
+                  <HistorySection
+                    title="🦅 Iron Condor Settlement History"
+                    entries={icHistory}
+                    showType={false}
+                  />
+                )}
+              </>
+            );
+          })()}
 
           {/* Top Setups from Last Scan */}
           {scan && (
@@ -562,6 +516,83 @@ function StatMini({ label, value }: { label: string; value: string }) {
     <div>
       <span className="text-muted">{label}: </span>
       <span className="font-semibold">{value}</span>
+    </div>
+  );
+}
+
+function HistorySection({ title, entries, showType }: {
+  title: string; entries: SignalHistoryEntry[]; showType: boolean;
+}) {
+  const wins = entries.filter(s => s.result === 'win').length;
+  const losses = entries.filter(s => s.result === 'loss').length;
+  const partials = entries.filter(s => s.result === 'partial').length;
+  const totalPnl = entries.reduce((sum, s) => sum + s.pnlPerContract, 0);
+  const winRate = entries.length > 0 ? +((wins / entries.length) * 100).toFixed(1) : 0;
+  const credits = entries.map(s => s.type === 'iron_condor' ? (s.combinedCredit || 0) : (s.credit || 0));
+  const avgCredit = credits.length > 0 ? credits.reduce((a, b) => a + b, 0) / credits.length : 0;
+  const bestTrade = entries.length > 0 ? Math.max(...entries.map(s => s.pnlPerContract)) : 0;
+  const worstTrade = entries.length > 0 ? Math.min(...entries.map(s => s.pnlPerContract)) : 0;
+
+  return (
+    <div className="mb-6">
+      <h2 className="text-lg font-semibold mb-3">{title}</h2>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-4">
+        <StatCard label="Trades" value={String(entries.length)} />
+        <StatCard label="Wins" value={String(wins)} color="text-green-400" />
+        <StatCard label="Losses" value={String(losses)} color="text-red-400" />
+        <StatCard label="Win Rate"
+          value={`${winRate}%`}
+          color={winRate >= 50 ? 'text-green-400' : 'text-red-400'} />
+        <StatCard label="Total P&L"
+          value={`$${fmt(totalPnl)}`}
+          color={totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}
+          sub="per contract" />
+        <StatCard label="Avg Credit" value={`$${fmt(avgCredit)}`} />
+        <StatCard label="Best / Worst"
+          value={`+$${fmt(bestTrade)} / $${fmt(worstTrade)}`}
+          color={totalPnl >= 0 ? 'text-green-400' : 'text-red-400'} />
+      </div>
+
+      <div className="bg-panel border border-border rounded-lg p-4">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-muted text-left text-xs">
+                <th className="py-2 px-2">Date</th>
+                {showType && <th className="py-2 px-2">Type</th>}
+                <th className="py-2 px-2">Strikes</th>
+                <th className="py-2 px-2 text-right">Credit</th>
+                <th className="py-2 px-2 text-right">SPX @ Alert</th>
+                <th className="py-2 px-2 text-right">SPX Close</th>
+                <th className="py-2 px-2 text-center">Result</th>
+                <th className="py-2 px-2 text-right">P&L</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((s, i) => {
+                const credit = s.type === 'iron_condor' ? s.combinedCredit : s.credit;
+                const typeLabel = s.type === 'put_credit' ? '🟢 Put CS' : '🔴 Call CS';
+                const dateStr = new Date(s.settledAt || s.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+                return (
+                  <tr key={i} className={`text-xs ${resultRowClass(s.result)}`}>
+                    <td className="py-2 px-2 text-muted">{dateStr}</td>
+                    {showType && <td className="py-2 px-2 whitespace-nowrap">{typeLabel}</td>}
+                    <td className="py-2 px-2 font-mono whitespace-nowrap">{strikeDisplay(s)}</td>
+                    <td className="py-2 px-2 text-right font-mono text-green-400">${fmt(credit)}</td>
+                    <td className="py-2 px-2 text-right font-mono">${fmt(s.spxPrice)}</td>
+                    <td className="py-2 px-2 text-right font-mono">${fmt(s.spxClose)}</td>
+                    <td className="py-2 px-2 text-center">{resultBadge(s.result)}</td>
+                    <td className={`py-2 px-2 text-right font-mono font-semibold ${s.pnlPerContract >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {s.pnlPerContract >= 0 ? '+' : ''}{fmt(s.pnlPerContract)} ({s.pnlPct}%)
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
