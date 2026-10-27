@@ -103,6 +103,8 @@ interface SignalStats {
   avgPnl: number;
   totalPnl: number;
   avgCredit: number;
+  bestTrade: number;
+  worstTrade: number;
 }
 
 interface HistoryEntry {
@@ -364,7 +366,7 @@ export default function Spx0dtePage() {
 
               {/* Stats Bar */}
               {data.signalStats && data.signalStats.total > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-4">
                   <StatCard label="Total Trades" value={String(data.signalStats.total)} />
                   <StatCard label="Wins" value={String(data.signalStats.wins)} color="text-green-400" />
                   <StatCard label="Losses" value={String(data.signalStats.losses)} color="text-red-400" />
@@ -376,6 +378,8 @@ export default function Spx0dtePage() {
                     color={data.signalStats.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}
                     sub="per contract" />
                   <StatCard label="Avg Credit" value={`$${fmt(data.signalStats.avgCredit)}`} />
+                  <StatCard label="Best Trade" value={`+$${fmt(data.signalStats.bestTrade)}`} color="text-green-400" />
+                  <StatCard label="Worst Trade" value={`$${fmt(data.signalStats.worstTrade)}`} color="text-red-400" />
                 </div>
               )}
 
@@ -390,6 +394,7 @@ export default function Spx0dtePage() {
                           <th className="py-2 px-2">Type</th>
                           <th className="py-2 px-2">Strikes</th>
                           <th className="py-2 px-2 text-right">Credit</th>
+                          <th className="py-2 px-2 text-right">SPX @ Alert</th>
                           <th className="py-2 px-2 text-right">SPX Close</th>
                           <th className="py-2 px-2 text-center">Result</th>
                           <th className="py-2 px-2 text-right">P&L</th>
@@ -401,11 +406,16 @@ export default function Spx0dtePage() {
                           const typeLabel = s.type === 'iron_condor' ? '🦅 IC' : s.type === 'put_credit' ? '🟢 Put CS' : '🔴 Call CS';
                           const dateStr = new Date(s.settledAt || s.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
                           return (
-                            <tr key={i} className={`border-b border-border/30 text-xs ${resultRowClass(s.result)}`}>
+                            <tr key={i} className={`text-xs ${resultRowClass(s.result)} ${
+                              s.result === 'win' ? 'border-l-2 border-l-green-500/60' :
+                              s.result === 'loss' ? 'border-l-2 border-l-red-500/60' :
+                              'border-l-2 border-l-yellow-500/60'
+                            }`}>
                               <td className="py-2 px-2 text-muted">{dateStr}</td>
                               <td className="py-2 px-2 whitespace-nowrap">{typeLabel}</td>
                               <td className="py-2 px-2 font-mono whitespace-nowrap">{strikeDisplay(s)}</td>
                               <td className="py-2 px-2 text-right font-mono text-green-400">${fmt(credit)}</td>
+                              <td className="py-2 px-2 text-right font-mono">${fmt(s.spxPrice)}</td>
                               <td className="py-2 px-2 text-right font-mono">${fmt(s.spxClose)}</td>
                               <td className="py-2 px-2 text-center">{resultBadge(s.result)}</td>
                               <td className={`py-2 px-2 text-right font-mono font-semibold ${s.pnlPerContract >= 0 ? 'text-green-400' : 'text-red-400'}`}>
