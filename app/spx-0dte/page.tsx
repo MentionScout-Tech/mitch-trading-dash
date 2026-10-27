@@ -71,6 +71,40 @@ interface TodaySignal {
   pnl: number | null;
 }
 
+interface SignalHistoryEntry {
+  key: string;
+  type: string;
+  timestamp: string;
+  spxPrice: number;
+  score: number;
+  shortStrike?: number;
+  longStrike?: number;
+  putShortStrike?: number;
+  putLongStrike?: number;
+  callShortStrike?: number;
+  callLongStrike?: number;
+  credit?: number;
+  combinedCredit?: number;
+  putCredit?: number;
+  callCredit?: number;
+  spxClose: number;
+  result: string;
+  pnlPerContract: number;
+  pnlPct: number;
+  settledAt: string;
+}
+
+interface SignalStats {
+  wins: number;
+  losses: number;
+  partials: number;
+  total: number;
+  winRate: number;
+  avgPnl: number;
+  totalPnl: number;
+  avgCredit: number;
+}
+
 interface HistoryEntry {
   date: string;
   time: string;
@@ -102,6 +136,8 @@ interface SpxData {
   } | null;
   lastRun: string | null;
   todaySignals: TodaySignal[];
+  signalHistory: SignalHistoryEntry[];
+  signalStats: SignalStats;
   stats: {
     totalScans: number;
     totalAlerts: number;
@@ -142,6 +178,34 @@ function scoreColor(score: number): string {
   if (score >= 60) return 'text-lime-300';
   if (score >= 40) return 'text-yellow-300';
   return 'text-muted';
+}
+
+function resultRowClass(result: string): string {
+  if (result === 'win') return 'bg-green-500/10 border-l-2 border-l-green-500';
+  if (result === 'loss') return 'bg-red-500/10 border-l-2 border-l-red-500';
+  if (result === 'partial') return 'bg-yellow-500/10 border-l-2 border-l-yellow-500';
+  return '';
+}
+
+function resultBadge(result: string): JSX.Element {
+  const colors: Record<string, string> = {
+    win: 'bg-green-500/20 text-green-400',
+    loss: 'bg-red-500/20 text-red-400',
+    partial: 'bg-yellow-500/20 text-yellow-300',
+  };
+  const labels: Record<string, string> = { win: '✅ WIN', loss: '❌ LOSS', partial: '🟡 PARTIAL' };
+  return (
+    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${colors[result] || 'bg-panel text-muted'}`}>
+      {labels[result] || result.toUpperCase()}
+    </span>
+  );
+}
+
+function strikeDisplay(s: SignalHistoryEntry): string {
+  if (s.type === 'iron_condor') {
+    return `${s.putShortStrike}P/${s.putLongStrike ?? (s.putShortStrike! - 5)}P · ${s.callShortStrike}C/${s.callLongStrike ?? (s.callShortStrike! + 5)}C`;
+  }
+  return `${s.shortStrike}/${s.longStrike}`;
 }
 
 export default function Spx0dtePage() {
@@ -290,6 +354,71 @@ export default function Spx0dtePage() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Signal History Stats + Table */}
+          {(data.signalHistory?.length > 0 || data.signalStats?.total > 0) && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-3">📊 Signal Settlement History</h2>
+
+              {/* Stats Bar */}
+              {data.signalStats && data.signalStats.total > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
+                  <StatCard label="Total Trades" value={String(data.signalStats.total)} />
+                  <StatCard label="Wins" value={String(data.signalStats.wins)} color="text-green-400" />
+                  <StatCard label="Losses" value={String(data.signalStats.losses)} color="text-red-400" />
+                  <StatCard label="Win Rate"
+                    value={`${data.signalStats.winRate}%`}
+                    color={data.signalStats.winRate >= 50 ? 'text-green-400' : 'text-red-400'} />
+                  <StatCard label="Total P&L"
+                    value={`$${fmt(data.signalStats.totalPnl)}`}
+                    color={data.signalStats.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}
+                    sub="per contract" />
+                  <StatCard label="Avg Credit" value={`$${fmt(data.signalStats.avgCredit)}`} />
+                </div>
+              )}
+
+              {/* History Table */}
+              {data.signalHistory?.length > 0 && (
+                <div className="bg-panel border border-border rounded-lg p-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-muted text-left text-xs">
+                          <th className="py-2 px-2">Date</th>
+                          <th className="py-2 px-2">Type</th>
+                          <th className="py-2 px-2">Strikes</th>
+                          <th className="py-2 px-2 text-right">Credit</th>
+                          <th className="py-2 px-2 text-right">SPX Close</th>
+                          <th className="py-2 px-2 text-center">Result</th>
+                          <th className="py-2 px-2 text-right">P&L</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.signalHistory.map((s, i) => {
+                          const credit = s.type === 'iron_condor' ? s.combinedCredit : s.credit;
+                          const typeLabel = s.type === 'iron_condor' ? '🦅 IC' : s.type === 'put_credit' ? '🟢 Put CS' : '🔴 Call CS';
+                          const dateStr = new Date(s.settledAt || s.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+                          return (
+                            <tr key={i} className={`border-b border-border/30 text-xs ${resultRowClass(s.result)}`}>
+                              <td className="py-2 px-2 text-muted">{dateStr}</td>
+                              <td className="py-2 px-2 whitespace-nowrap">{typeLabel}</td>
+                              <td className="py-2 px-2 font-mono whitespace-nowrap">{strikeDisplay(s)}</td>
+                              <td className="py-2 px-2 text-right font-mono text-green-400">${fmt(credit)}</td>
+                              <td className="py-2 px-2 text-right font-mono">${fmt(s.spxClose)}</td>
+                              <td className="py-2 px-2 text-center">{resultBadge(s.result)}</td>
+                              <td className={`py-2 px-2 text-right font-mono font-semibold ${s.pnlPerContract >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {s.pnlPerContract >= 0 ? '+' : ''}{fmt(s.pnlPerContract)} ({s.pnlPct}%)
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
