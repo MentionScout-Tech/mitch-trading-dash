@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { api, Overview, OverviewSignal, StrategyStat } from '../lib/api';
 
 const METHOD_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
-  social_arb:   { label: 'Social Arb',  emoji: '🔥', color: 'bg-orange-500/20 text-orange-300' },
-  earnings:     { label: 'Earnings',    emoji: '📅', color: 'bg-blue-500/20 text-blue-300' },
-  insider:      { label: 'Insider',     emoji: '👤', color: 'bg-purple-500/20 text-purple-300' },
-  '8k':         { label: '8-K',         emoji: '📄', color: 'bg-yellow-500/20 text-yellow-300' },
+  social_arb:   { label: 'Social Arb',  emoji: '🔥', color: 'bg-yellow/20 text-yellow/70' },
+  earnings:     { label: 'Earnings',    emoji: '📅', color: 'bg-accent/20 text-accent' },
+  insider:      { label: 'Insider',     emoji: '👤', color: 'bg-accent/20 text-accent' },
+  '8k':         { label: '8-K',         emoji: '📄', color: 'bg-yellow/20 text-yellow' },
   sector_alert: { label: 'Sector',      emoji: '🎯', color: 'bg-pink-500/20 text-pink-300' },
-  wheel:        { label: 'Wheel',       emoji: '🎡', color: 'bg-green-500/20 text-green-300' }
+  wheel:        { label: 'Wheel',       emoji: '🎡', color: 'bg-green/20 text-green' }
 };
 
 interface LiveQuote { price: number; change: number; changePercent: number; }

@@ -2,5 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body { background: #0a0e14; color: #e6edf3; min-height: 100vh; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+/* ── Theme: Dark (default) ─────────────────────────────── */
+:root {
+  --color-bg: 10 14 20;
+  --color-panel: 17 22 30;
+  --color-panel2: 22 28 38;
+  --color-border: 34 42 53;
+  --color-text: 230 237 243;
+  --color-muted: 139 148 158;
+  --color-accent: 88 166 255;
+  --color-green: 63 185 80;
+  --color-red: 248 81 73;
+  --color-yellow: 210 153 34;
+  color-scheme: dark;
+}
+
+/* ── Theme: Light ──────────────────────────────────────── */
+:root.light {
+  --color-bg: 246 248 250;
+  --color-panel: 255 255 255;
+  --color-panel2: 240 242 245;
+  --color-border: 209 217 224;
+  --color-text: 31 35 40;
+  --color-muted: 101 109 118;
+  --color-accent: 9 105 218;
+  --color-green: 26 127 55;
+  --color-red: 207 34 46;
+  --color-yellow: 154 103 0;
+  color-scheme: light;
+}
+
+html, body {
+  background: rgb(var(--color-bg));
+  color: rgb(var(--color-text));
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgb(var(--color-border)); border-radius: 3px; }
+
+input, select, textarea { color-scheme: inherit; }

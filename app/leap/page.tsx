@@ -51,16 +51,16 @@ type SortDir = 'asc' | 'desc';
 /* ── Helpers ───────────────────────────────────────────── */
 
 function scoreColor(score: number): string {
-  if (score >= 80) return 'text-green-400';
-  if (score >= 70) return 'text-lime-300';
-  if (score >= 50) return 'text-orange-300';
+  if (score >= 80) return 'text-green';
+  if (score >= 70) return 'text-yellow';
+  if (score >= 50) return 'text-yellow/70';
   return 'text-muted';
 }
 
 function scoreBg(score: number): string {
-  if (score >= 80) return 'bg-green-500/20 text-green-400 border-green-500/30';
-  if (score >= 70) return 'bg-lime-400/15 text-lime-300 border-lime-400/25';
-  if (score >= 50) return 'bg-orange-400/15 text-orange-300 border-orange-400/25';
+  if (score >= 80) return 'bg-green/20 text-green border-green/30';
+  if (score >= 70) return 'bg-yellow/15 text-yellow border-yellow/25';
+  if (score >= 50) return 'bg-yellow/15 text-yellow/70 border-yellow/25';
   return 'bg-panel2 text-muted border-border';
 }
 
@@ -96,18 +96,18 @@ function SortHeader({ label, field, sortField, sortDir, onSort }: {
 }
 
 function pnlColor(pct: number): string {
-  if (pct > 0) return 'text-green-400';
-  if (pct < 0) return 'text-red-400';
+  if (pct > 0) return 'text-green';
+  if (pct < 0) return 'text-red';
   return 'text-muted';
 }
 
 function pnlBg(pct: number, pnlStatus?: string | null): string {
-  if (pnlStatus === 'green') return 'bg-green-500/25 border-green-400/50 ring-1 ring-green-400/30';
-  if (pnlStatus === 'yellow') return 'bg-yellow-500/20 border-yellow-400/40';
-  if (pct >= 5) return 'bg-green-500/15 border-green-500/30';
-  if (pct > 0) return 'bg-green-500/10 border-green-500/20';
-  if (pct <= -5) return 'bg-red-500/15 border-red-500/30';
-  if (pct < 0) return 'bg-red-500/10 border-red-500/20';
+  if (pnlStatus === 'green') return 'bg-green/25 border-green/50 ring-1 ring-green/30';
+  if (pnlStatus === 'yellow') return 'bg-yellow/20 border-yellow/40';
+  if (pct >= 5) return 'bg-green/15 border-green/30';
+  if (pct > 0) return 'bg-green/10 border-green/20';
+  if (pct <= -5) return 'bg-red/15 border-red/30';
+  if (pct < 0) return 'bg-red/10 border-red/20';
   return 'bg-panel2 border-border';
 }
 
@@ -134,8 +134,8 @@ function SignalCard({ signal, showPnl }: { signal: LeapSignal; showPnl?: boolean
         {/* P&L badge */}
         {showPnl && pnlPct !== null && (
           <div className="flex items-center gap-2">
-            {signal.pnlStatus === 'green' && <span className="text-xs font-bold bg-green-500/30 text-green-300 px-2 py-0.5 rounded border border-green-400/40">🎯 10%+</span>}
-            {signal.pnlStatus === 'yellow' && <span className="text-xs font-bold bg-yellow-500/30 text-yellow-300 px-2 py-0.5 rounded border border-yellow-400/40">⚡ 5%+</span>}
+            {signal.pnlStatus === 'green' && <span className="text-xs font-bold bg-green/30 text-green px-2 py-0.5 rounded border border-green/40">🎯 10%+</span>}
+            {signal.pnlStatus === 'yellow' && <span className="text-xs font-bold bg-yellow/30 text-yellow px-2 py-0.5 rounded border border-yellow/40">⚡ 5%+</span>}
             <span className={`text-lg font-bold ${pnlColor(pnlPct)}`}>
               {pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}%
             </span>
@@ -355,7 +355,7 @@ export default function LeapPage() {
                     : null;
                   return (
                     <tr key={s.ticker + s.entryDate + i} className={`border-t border-border hover:bg-panel2/50 ${
-                      pnlPct !== null && pnlPct >= 0 ? 'bg-green-500/5' : pnlPct !== null ? 'bg-red-500/5' : ''
+                      pnlPct !== null && pnlPct >= 0 ? 'bg-green/5' : pnlPct !== null ? 'bg-red/5' : ''
                     }`}>
                       <td className="px-3 py-2 font-bold">{s.ticker}</td>
                       <td className="px-3 py-2 text-muted">{formatDate(s.entryDate)}</td>
@@ -449,7 +449,7 @@ export default function LeapPage() {
               const score = scan?.score || 0;
               const isSignal = signalTickers.has(w.ticker);
               return (
-                <tr key={w.ticker} className={`border-t border-border hover:bg-panel2/50 ${isSignal ? 'bg-green-500/5' : ''}`}>
+                <tr key={w.ticker} className={`border-t border-border hover:bg-panel2/50 ${isSignal ? 'bg-green/5' : ''}`}>
                   <td className="px-3 py-2 font-bold">{w.ticker}</td>
                   <td className="px-3 py-2 text-center">
                     <span className="text-accent font-bold">{w.whaleCount}</span>
@@ -463,7 +463,7 @@ export default function LeapPage() {
                   </td>
                   <td className="px-3 py-2">
                     {isSignal ? (
-                      <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded font-bold">
+                      <span className="text-xs bg-green/20 text-green px-2 py-0.5 rounded font-bold">
                         🚨 ACTIVE SIGNAL
                       </span>
                     ) : score > 0 ? (

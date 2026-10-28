@@ -42,10 +42,10 @@ type SortField = 'name' | 'whales' | 'totalValue' | 'estEntry' | 'currentPrice' 
 type SortDir = 'asc' | 'desc';
 
 const CHANGE_STYLES: Record<string, { label: string; emoji: string; bg: string; text: string }> = {
-  NEW: { label: 'NEW', emoji: '🆕', bg: 'bg-green-500/20', text: 'text-green-400' },
-  INCREASED: { label: 'INCREASED', emoji: '📈', bg: 'bg-green-500/10', text: 'text-green-300' },
-  REDUCED: { label: 'REDUCED', emoji: '📉', bg: 'bg-orange-500/10', text: 'text-orange-300' },
-  SOLD: { label: 'SOLD', emoji: '🚫', bg: 'bg-red-500/15', text: 'text-red-400' },
+  NEW: { label: 'NEW', emoji: '🆕', bg: 'bg-green/20', text: 'text-green' },
+  INCREASED: { label: 'INCREASED', emoji: '📈', bg: 'bg-green/10', text: 'text-green' },
+  REDUCED: { label: 'REDUCED', emoji: '📉', bg: 'bg-yellow/10', text: 'text-yellow/70' },
+  SOLD: { label: 'SOLD', emoji: '🚫', bg: 'bg-red/15', text: 'text-red' },
   UNCHANGED: { label: 'UNCHANGED', emoji: '➖', bg: 'bg-gray-500/10', text: 'text-gray-400' },
 };
 
@@ -98,18 +98,18 @@ function getForwardPE(h: Holding): number | null {
 function freshnessLabel(movePct: number | null): { label: string; cls: string } {
   if (movePct == null) return { label: 'Unknown', cls: 'bg-gray-500/10 text-gray-400' };
   if (movePct < 0) return { label: 'Below whale entry', cls: 'bg-cyan-500/10 text-cyan-300' };
-  if (movePct <= 10) return { label: 'Fresh', cls: 'bg-green-500/20 text-green-400' };
-  if (movePct <= 25) return { label: 'Working', cls: 'bg-lime-500/15 text-lime-300' };
-  if (movePct <= 40) return { label: 'Extended', cls: 'bg-orange-500/15 text-orange-300' };
-  return { label: 'Overextended', cls: 'bg-red-500/15 text-red-400' };
+  if (movePct <= 10) return { label: 'Fresh', cls: 'bg-green/20 text-green' };
+  if (movePct <= 25) return { label: 'Working', cls: 'bg-green/15 text-yellow' };
+  if (movePct <= 40) return { label: 'Extended', cls: 'bg-yellow/15 text-yellow/70' };
+  return { label: 'Overextended', cls: 'bg-red/15 text-red' };
 }
 
 function scoreConsensusOpportunity(whaleCount: number, movePct: number | null): { label: string; cls: string } {
   if (movePct == null) return { label: 'Needs price data', cls: 'bg-gray-500/10 text-gray-400' };
-  if (whaleCount >= 3 && movePct <= 10) return { label: 'Best setup', cls: 'bg-green-500/20 text-green-400' };
-  if (whaleCount >= 2 && movePct <= 15) return { label: 'Still attractive', cls: 'bg-lime-500/15 text-lime-300' };
-  if (movePct <= 30) return { label: 'Okay, not early', cls: 'bg-orange-500/15 text-orange-300' };
-  return { label: 'Late / stretched', cls: 'bg-red-500/15 text-red-400' };
+  if (whaleCount >= 3 && movePct <= 10) return { label: 'Best setup', cls: 'bg-green/20 text-green' };
+  if (whaleCount >= 2 && movePct <= 15) return { label: 'Still attractive', cls: 'bg-green/15 text-yellow' };
+  if (movePct <= 30) return { label: 'Okay, not early', cls: 'bg-yellow/15 text-yellow/70' };
+  return { label: 'Late / stretched', cls: 'bg-red/15 text-red' };
 }
 
 function ChangeBadge({ change }: { change: string }) {
@@ -343,7 +343,7 @@ export default function WhalesPage() {
                       <div>{c.name}</div>
                       {c.ticker && <div className="text-[11px] text-muted font-normal">{c.ticker}</div>}
                     </td>
-                    <td className="px-3 py-2 text-right"><span className="text-green-400 font-bold">{c.whales.length}</span></td>
+                    <td className="px-3 py-2 text-right"><span className="text-green font-bold">{c.whales.length}</span></td>
                     <td className="px-3 py-2 text-right">{fmtMoney(c.totalValue)}</td>
                     <td className="px-3 py-2 text-right">{fmtPrice(c.estEntry)}</td>
                     <td className="px-3 py-2 text-right">{fmtPrice(c.currentPrice)}</td>
@@ -351,7 +351,7 @@ export default function WhalesPage() {
                       {c.movePct == null ? (
                         <span className="text-muted">—</span>
                       ) : (
-                        <span className={c.movePct <= 10 ? 'text-green-400' : c.movePct <= 25 ? 'text-lime-300' : c.movePct <= 40 ? 'text-orange-300' : 'text-red-400'}>
+                        <span className={c.movePct <= 10 ? 'text-green' : c.movePct <= 25 ? 'text-yellow' : c.movePct <= 40 ? 'text-yellow/70' : 'text-red'}>
                           {c.movePct > 0 ? '+' : ''}{c.movePct.toFixed(1)}%
                         </span>
                       )}
@@ -359,14 +359,14 @@ export default function WhalesPage() {
                     <td className="px-3 py-2 text-right">
                       {c.forwardPE != null ? (
                         <div>
-                          <span className={c.forwardPE < 20 ? 'text-green-400' : c.forwardPE < 35 ? 'text-lime-300' : c.forwardPE < 60 ? 'text-orange-300' : 'text-red-400'}>
+                          <span className={c.forwardPE < 20 ? 'text-green' : c.forwardPE < 35 ? 'text-yellow' : c.forwardPE < 60 ? 'text-yellow/70' : 'text-red'}>
                             {c.forwardPE.toFixed(1)}
                           </span>
                           <div className="text-[10px] text-muted">fwd</div>
                         </div>
                       ) : c.trailingPE != null ? (
                         <div>
-                          <span className={c.trailingPE < 20 ? 'text-green-400' : c.trailingPE < 35 ? 'text-lime-300' : c.trailingPE < 60 ? 'text-orange-300' : 'text-red-400'}>
+                          <span className={c.trailingPE < 20 ? 'text-green' : c.trailingPE < 35 ? 'text-yellow' : c.trailingPE < 60 ? 'text-yellow/70' : 'text-red'}>
                             {c.trailingPE.toFixed(1)}
                           </span>
                           <div className="text-[10px] text-muted">ttm</div>
@@ -429,9 +429,9 @@ export default function WhalesPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  {newCount > 0 && <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">{newCount} new</span>}
-                  {addedCount > 0 && <span className="text-xs bg-green-500/10 text-green-300 px-2 py-0.5 rounded">{addedCount} added</span>}
-                  {soldCount > 0 && <span className="text-xs bg-red-500/15 text-red-400 px-2 py-0.5 rounded">{soldCount} sold</span>}
+                  {newCount > 0 && <span className="text-xs bg-green/20 text-green px-2 py-0.5 rounded">{newCount} new</span>}
+                  {addedCount > 0 && <span className="text-xs bg-green/10 text-green px-2 py-0.5 rounded">{addedCount} added</span>}
+                  {soldCount > 0 && <span className="text-xs bg-red/15 text-red px-2 py-0.5 rounded">{soldCount} sold</span>}
                   <span className="text-muted">{isExpanded ? '▲' : '▼'}</span>
                 </div>
               </button>
@@ -439,7 +439,7 @@ export default function WhalesPage() {
               {isExpanded && (
                 <div className="border-t border-border">
                   {w.error ? (
-                    <div className="p-4 text-red-400 text-sm">{w.error}</div>
+                    <div className="p-4 text-red text-sm">{w.error}</div>
                   ) : holdings.length === 0 ? (
                     <div className="p-4 text-muted text-sm">No holdings match this filter</div>
                   ) : (
@@ -475,7 +475,7 @@ export default function WhalesPage() {
                                 <td className="px-3 py-2 text-right">{fmtShares(h.shares)}</td>
                                 <td className="px-3 py-2 text-right">
                                   {h.change !== 'UNCHANGED' && h.sharesDiff !== 0 ? (
-                                    <span className={h.sharesDiff > 0 ? 'text-green-400' : 'text-red-400'}>
+                                    <span className={h.sharesDiff > 0 ? 'text-green' : 'text-red'}>
                                       {diffSign}{fmtShares(h.sharesDiff)}
                                     </span>
                                   ) : (
@@ -494,7 +494,7 @@ export default function WhalesPage() {
                                 </td>
                                 <td className="px-3 py-2 text-right">
                                   {hPE != null ? (
-                                    <span className={hPE < 20 ? 'text-green-400' : hPE < 35 ? 'text-lime-300' : hPE < 60 ? 'text-orange-300' : 'text-red-400'}>
+                                    <span className={hPE < 20 ? 'text-green' : hPE < 35 ? 'text-yellow' : hPE < 60 ? 'text-yellow/70' : 'text-red'}>
                                       {hPE.toFixed(1)}
                                     </span>
                                   ) : (
@@ -504,7 +504,7 @@ export default function WhalesPage() {
                                 <td className="px-3 py-2 text-right">{h.portfolioWeight.toFixed(1)}%</td>
                                 <td className="px-3 py-2 text-center text-xs">
                                   {h.putCall ? (
-                                    <span className={h.putCall === 'Put' ? 'text-red-400' : 'text-green-400'}>{h.putCall}</span>
+                                    <span className={h.putCall === 'Put' ? 'text-red' : 'text-green'}>{h.putCall}</span>
                                   ) : (
                                     <span className="text-muted">Stock</span>
                                   )}

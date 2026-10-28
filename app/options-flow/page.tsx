@@ -59,11 +59,11 @@ function fmtK(n: number): string {
 
 function pnlColor(pct: number | null): string {
   if (pct == null) return 'text-muted';
-  if (pct >= 10) return 'text-green-400 font-bold';
-  if (pct >= 5) return 'text-lime-300';
-  if (pct >= 0) return 'text-green-400';
-  if (pct >= -5) return 'text-orange-300';
-  return 'text-red-400';
+  if (pct >= 10) return 'text-green font-bold';
+  if (pct >= 5) return 'text-yellow';
+  if (pct >= 0) return 'text-green';
+  if (pct >= -5) return 'text-yellow/70';
+  return 'text-red';
 }
 
 function timeAgo(iso: string): string {
@@ -122,16 +122,16 @@ export default function OptionsFlowPage() {
         </div>
       </div>
 
-      {err && <div className="bg-red-500/10 border border-red-500 text-red-400 p-3 rounded mb-4">{err}</div>}
+      {err && <div className="bg-red/10 border border-red text-red p-3 rounded mb-4">{err}</div>}
 
       {/* Stats cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
           <StatCard label="Total Signals" value={String(stats.total)} />
-          <StatCard label="Bullish" value={String(stats.bullish)} color="text-green-400" />
-          <StatCard label="Bearish" value={String(stats.bearish)} color="text-red-400" />
+          <StatCard label="Bullish" value={String(stats.bullish)} color="text-green" />
+          <StatCard label="Bearish" value={String(stats.bearish)} color="text-red" />
           <StatCard label="Avg P&L" value={stats.avgPnlPct != null ? `${stats.avgPnlPct > 0 ? '+' : ''}${stats.avgPnlPct}%` : '—'}
-            color={stats.avgPnlPct != null ? (stats.avgPnlPct >= 0 ? 'text-green-400' : 'text-red-400') : 'text-muted'} />
+            color={stats.avgPnlPct != null ? (stats.avgPnlPct >= 0 ? 'text-green' : 'text-red') : 'text-muted'} />
           <StatCard label="Premium Traded" value={fmtK(stats.notionalTraded)} />
         </div>
       )}
@@ -180,10 +180,10 @@ export default function OptionsFlowPage() {
                   </td>
                   <td className="py-2 px-2 text-muted text-xs font-mono">
                     ${s.strike} {s.type.toUpperCase()} {s.expiration}
-                    {s.otm && <span className="ml-1 text-yellow-500 text-[10px]">OTM</span>}
+                    {s.otm && <span className="ml-1 text-yellow text-[10px]">OTM</span>}
                   </td>
                   <td className="py-2 px-2 text-right font-mono">
-                    <span className={s.volOiRatio >= 10 ? 'text-yellow-400 font-bold' : ''}>{s.volOiRatio}x</span>
+                    <span className={s.volOiRatio >= 10 ? 'text-yellow font-bold' : ''}>{s.volOiRatio}x</span>
                   </td>
                   <td className="py-2 px-2 text-right font-mono">{fmtK(s.notional)}</td>
                   <td className="py-2 px-2 text-right font-mono">${fmt(s.entryPrice)}</td>

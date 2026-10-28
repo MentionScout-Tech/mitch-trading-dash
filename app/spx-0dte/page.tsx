@@ -164,9 +164,9 @@ function timeAgo(iso: string): string {
 }
 
 function biasColor(bias: string): string {
-  if (bias === 'bullish') return 'text-green-400';
-  if (bias === 'bearish') return 'text-red-400';
-  return 'text-yellow-300';
+  if (bias === 'bullish') return 'text-green';
+  if (bias === 'bearish') return 'text-red';
+  return 'text-yellow';
 }
 
 function biasEmoji(bias: string): string {
@@ -176,24 +176,24 @@ function biasEmoji(bias: string): string {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 80) return 'text-green-400 font-bold';
-  if (score >= 60) return 'text-lime-300';
-  if (score >= 40) return 'text-yellow-300';
+  if (score >= 80) return 'text-green font-bold';
+  if (score >= 60) return 'text-yellow';
+  if (score >= 40) return 'text-yellow';
   return 'text-muted';
 }
 
 function resultRowClass(result: string): string {
-  if (result === 'win') return 'bg-green-500/10 border-l-2 border-l-green-500';
-  if (result === 'loss') return 'bg-red-500/10 border-l-2 border-l-red-500';
-  if (result === 'partial') return 'bg-yellow-500/10 border-l-2 border-l-yellow-500';
+  if (result === 'win') return 'bg-green/10 border-l-2 border-l-green';
+  if (result === 'loss') return 'bg-red/10 border-l-2 border-l-red';
+  if (result === 'partial') return 'bg-yellow/10 border-l-2 border-l-yellow';
   return '';
 }
 
 function resultBadge(result: string): React.ReactNode {
   const colors: Record<string, string> = {
-    win: 'bg-green-500/20 text-green-400',
-    loss: 'bg-red-500/20 text-red-400',
-    partial: 'bg-yellow-500/20 text-yellow-300',
+    win: 'bg-green/20 text-green',
+    loss: 'bg-red/20 text-red',
+    partial: 'bg-yellow/20 text-yellow',
   };
   const labels: Record<string, string> = { win: '✅ WIN', loss: '❌ LOSS', partial: '🟡 PARTIAL' };
   return (
@@ -270,7 +270,7 @@ export default function Spx0dtePage() {
         </div>
       </div>
 
-      {err && <div className="bg-red-500/10 border border-red-500 text-red-400 p-3 rounded mb-4">{err}</div>}
+      {err && <div className="bg-red/10 border border-red text-red p-3 rounded mb-4">{err}</div>}
 
       {loading && <div className="text-muted py-8 text-center">Loading SPX 0DTE data...</div>}
 
@@ -280,15 +280,15 @@ export default function Spx0dtePage() {
           <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
             <StatCard label="SPX" value={live?.spxPrice ? `$${fmt(live.spxPrice)}` : '—'}
               sub={live?.spxChangePct != null ? `${live.spxChangePct >= 0 ? '+' : ''}${fmt(live.spxChangePct)}%` : undefined}
-              subColor={live?.spxChangePct != null ? (live.spxChangePct >= 0 ? 'text-green-400' : 'text-red-400') : undefined} />
+              subColor={live?.spxChangePct != null ? (live.spxChangePct >= 0 ? 'text-green' : 'text-red') : undefined} />
             <StatCard label="VIX" value={live?.vix ? fmt(live.vix, 1) : '—'}
               sub={live?.vixChange != null ? `${live.vixChange >= 0 ? '+' : ''}${fmt(live.vixChange, 1)}` : undefined}
-              subColor={live?.vixChange != null ? (live.vixChange >= 0 ? 'text-red-400' : 'text-green-400') : undefined} />
+              subColor={live?.vixChange != null ? (live.vixChange >= 0 ? 'text-red' : 'text-green') : undefined} />
             <StatCard label="Expected Move" value={live?.expectedMove ? `±$${fmt(live.expectedMove)}` : '—'} />
             <StatCard label="Bias" value={cond ? `${biasEmoji(cond.bias)} ${cond.bias.toUpperCase()}` : '—'}
               color={cond ? biasColor(cond.bias) : undefined} />
             <StatCard label="Trend Strength" value={cond ? `${cond.trendStrength}/100` : '—'}
-              color={cond ? (cond.trendStrength >= 50 ? 'text-green-400' : cond.trendStrength >= 30 ? 'text-yellow-300' : 'text-muted') : undefined} />
+              color={cond ? (cond.trendStrength >= 50 ? 'text-green' : cond.trendStrength >= 30 ? 'text-yellow' : 'text-muted') : undefined} />
             <StatCard label="Today Alerts" value={String(data.todaySignals.length)} />
           </div>
 
@@ -300,14 +300,14 @@ export default function Spx0dtePage() {
                 <div>
                   <span className="text-muted">VWAP: </span>
                   <span className="font-mono">${fmt(cond.vwap)}</span>
-                  <span className={`ml-1 text-xs ${cond.aboveVwap ? 'text-green-400' : 'text-red-400'}`}>
+                  <span className={`ml-1 text-xs ${cond.aboveVwap ? 'text-green' : 'text-red'}`}>
                     {cond.aboveVwap ? '▲ above' : '▼ below'}
                   </span>
                 </div>
                 <div>
                   <span className="text-muted">SMA20: </span>
                   <span className="font-mono">${fmt(cond.sma20)}</span>
-                  <span className={`ml-1 text-xs ${cond.aboveSma20 ? 'text-green-400' : 'text-red-400'}`}>
+                  <span className={`ml-1 text-xs ${cond.aboveSma20 ? 'text-green' : 'text-red'}`}>
                     {cond.aboveSma20 ? '▲ above' : '▼ below'}
                   </span>
                 </div>
@@ -318,7 +318,7 @@ export default function Spx0dtePage() {
                 </div>
                 <div>
                   <span className="text-muted">Momentum: </span>
-                  <span className={`font-mono ${cond.momentum >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  <span className={`font-mono ${cond.momentum >= 0 ? 'text-green' : 'text-red'}`}>
                     {cond.momentum >= 0 ? '+' : ''}{fmt(cond.momentum, 4)}%
                   </span>
                 </div>
@@ -351,18 +351,18 @@ export default function Spx0dtePage() {
                         <>
                           <div><span className="text-muted">Put side:</span> {s.putShortStrike}P / {(s.putShortStrike || 0) - 5}P</div>
                           <div><span className="text-muted">Call side:</span> {s.callShortStrike}C / {(s.callShortStrike || 0) + 5}C</div>
-                          <div><span className="text-muted">Credit:</span> <span className="text-green-400 font-mono">${fmt(s.combinedCredit)}</span></div>
+                          <div><span className="text-muted">Credit:</span> <span className="text-green font-mono">${fmt(s.combinedCredit)}</span></div>
                         </>
                       ) : (
                         <>
                           <div><span className="text-muted">Strikes:</span> {s.shortStrike} / {s.longStrike}</div>
-                          <div><span className="text-muted">Credit:</span> <span className="text-green-400 font-mono">${fmt(s.credit)}</span></div>
+                          <div><span className="text-muted">Credit:</span> <span className="text-green font-mono">${fmt(s.credit)}</span></div>
                         </>
                       )}
                       <div>
                         <span className="text-muted">SPX at alert:</span> <span className="font-mono">${fmt(s.spxPrice)}</span>
                         {s.pnl != null && (
-                          <span className={`ml-2 text-xs ${s.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          <span className={`ml-2 text-xs ${s.pnl >= 0 ? 'text-green' : 'text-red'}`}>
                             ({s.pnl >= 0 ? '+' : ''}{fmt(s.pnl)} pts since)
                           </span>
                         )}
@@ -421,7 +421,7 @@ export default function Spx0dtePage() {
                           <span className="text-xs text-muted">{s.type === 'put_credit' ? 'PUT' : 'CALL'}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-green-400 font-mono">${fmt(s.credit)}</span>
+                          <span className="text-green font-mono">${fmt(s.credit)}</span>
                           <span className="text-muted">{s.creditPct}%</span>
                           <span className="text-muted">Δ{(s.shortDelta * 100).toFixed(0)}%</span>
                           <span className="text-muted">{s.emMultiple}x EM</span>
@@ -449,7 +449,7 @@ export default function Spx0dtePage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-green-400 font-mono">${fmt(c.combinedCredit)}</span>
+                          <span className="text-green font-mono">${fmt(c.combinedCredit)}</span>
                           <span className="text-muted">{c.creditPct}%</span>
                           <span className="text-muted">R:R {c.rrRatio}</span>
                           <span className={scoreColor(c.score)}>{c.score}</span>
@@ -560,23 +560,23 @@ function HistorySection({ title, entries, showType, contracts }: {
         <StatCard label="Trades" value={String(entries.length)} />
         <StatCard label={`Wins (${wins})`}
           value={`+$${fmt(winTotal * contracts)}`}
-          color="text-green-400"
+          color="text-green"
           sub={contracts > 1 ? `$${fmt(winTotal)}/ct` : undefined} />
         <StatCard label={`Losses (${losses})`}
           value={`-$${fmt(Math.abs(lossTotal) * contracts)}`}
-          color="text-red-400"
+          color="text-red"
           sub={contracts > 1 ? `-$${fmt(Math.abs(lossTotal))}/ct` : undefined} />
         <StatCard label="Net Profit"
           value={`${totalPnl >= 0 ? '+' : '-'}$${fmt(Math.abs(totalPnl) * contracts)}`}
-          color={totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}
+          color={totalPnl >= 0 ? 'text-green' : 'text-red'}
           sub={contracts > 1 ? `${totalPnl >= 0 ? '+' : ''}$${fmt(totalPnl)}/ct` : 'per contract'} />
         <StatCard label="Win Rate"
           value={`${winRate}%`}
-          color={winRate >= 50 ? 'text-green-400' : 'text-red-400'} />
+          color={winRate >= 50 ? 'text-green' : 'text-red'} />
         <StatCard label="Avg Credit" value={`$${fmt(avgCredit * contracts)}`}
           sub={contracts > 1 ? `$${fmt(avgCredit)}/ct` : undefined} />
-        <StatCard label="Best Trade" value={`+$${fmt(bestTrade * contracts)}`} color="text-green-400" />
-        <StatCard label="Worst Trade" value={`-$${fmt(Math.abs(worstTrade) * contracts)}`} color="text-red-400" />
+        <StatCard label="Best Trade" value={`+$${fmt(bestTrade * contracts)}`} color="text-green" />
+        <StatCard label="Worst Trade" value={`-$${fmt(Math.abs(worstTrade) * contracts)}`} color="text-red" />
       </div>
 
       <div className="bg-panel border border-border rounded-lg p-4">
@@ -604,11 +604,11 @@ function HistorySection({ title, entries, showType, contracts }: {
                     <td className="py-2 px-2 text-muted">{dateStr}</td>
                     {showType && <td className="py-2 px-2 whitespace-nowrap">{typeLabel}</td>}
                     <td className="py-2 px-2 font-mono whitespace-nowrap">{strikeDisplay(s)}</td>
-                    <td className="py-2 px-2 text-right font-mono text-green-400">${fmt(credit)}</td>
+                    <td className="py-2 px-2 text-right font-mono text-green">${fmt(credit)}</td>
                     <td className="py-2 px-2 text-right font-mono">${fmt(s.spxPrice)}</td>
                     <td className="py-2 px-2 text-right font-mono">${fmt(s.spxClose)}</td>
                     <td className="py-2 px-2 text-center">{resultBadge(s.result)}</td>
-                    <td className={`py-2 px-2 text-right font-mono font-semibold ${s.pnlPerContract >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    <td className={`py-2 px-2 text-right font-mono font-semibold ${s.pnlPerContract >= 0 ? 'text-green' : 'text-red'}`}>
                       {s.pnlPerContract >= 0 ? '+' : ''}{fmt(s.pnlPerContract * contracts)}
                       {contracts === 1 && <span className="text-muted font-normal"> ({s.pnlPct}%)</span>}
                     </td>

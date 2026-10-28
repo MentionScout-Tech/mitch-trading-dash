@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
+import { useTheme } from './ThemeProvider';
 
 const whaleSubLinks = [
   { href: '/whales', label: 'Overview' },
@@ -15,6 +16,7 @@ const whalePaths = whaleSubLinks.map(l => l.href);
 export default function Nav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
   const [authed, setAuthed] = useState(false);
   const [whaleOpen, setWhaleOpen] = useState(false);
   const whaleRef = useRef<HTMLDivElement>(null);
@@ -116,7 +118,12 @@ export default function Nav() {
           </div>
         </div>
         {authed && (
-          <button onClick={logout} className="text-xs text-muted hover:text-text">Logout</button>
+          <div className="flex items-center gap-3">
+            <button onClick={toggleTheme} className="text-sm hover:text-text text-muted" title="Toggle theme">
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+            <button onClick={logout} className="text-xs text-muted hover:text-text">Logout</button>
+          </div>
         )}
       </div>
     </nav>

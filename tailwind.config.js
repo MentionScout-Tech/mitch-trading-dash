@@ -4,16 +4,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: '#0a0e14',
-        panel: '#11161e',
-        panel2: '#161c26',
-        border: '#222a35',
-        text: '#e6edf3',
-        muted: '#8b949e',
-        accent: '#58a6ff',
-        green: '#3fb950',
-        red: '#f85149',
-        yellow: '#d29922'
+        bg: 'rgb(var(--color-bg) / <alpha-value>)',
+        panel: 'rgb(var(--color-panel) / <alpha-value>)',
+        panel2: 'rgb(var(--color-panel2) / <alpha-value>)',
+        border: 'rgb(var(--color-border) / <alpha-value>)',
+        text: 'rgb(var(--color-text) / <alpha-value>)',
+        muted: 'rgb(var(--color-muted) / <alpha-value>)',
+        accent: 'rgb(var(--color-accent) / <alpha-value>)',
+        green: 'rgb(var(--color-green) / <alpha-value>)',
+        red: 'rgb(var(--color-red) / <alpha-value>)',
+        yellow: 'rgb(var(--color-yellow) / <alpha-value>)'
       }
     }
   },

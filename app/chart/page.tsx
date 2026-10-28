@@ -137,8 +137,8 @@ function ChartPage() {
 
   function go() { const t = input.trim().toUpperCase(); if (t) setTicker(t); }
 
-  const biasColor = (b: string) => b === 'bullish' ? 'text-green-400' : b === 'bearish' ? 'text-red-400' : 'text-yellow-300';
-  const biasBg = (b: string) => b === 'bullish' ? 'bg-green-500/20 border-green-500/40' : b === 'bearish' ? 'bg-red-500/20 border-red-500/40' : 'bg-yellow-500/20 border-yellow-500/40';
+  const biasColor = (b: string) => b === 'bullish' ? 'text-green' : b === 'bearish' ? 'text-red' : 'text-yellow';
+  const biasBg = (b: string) => b === 'bullish' ? 'bg-green/20 border-green/40' : b === 'bearish' ? 'bg-red/20 border-red/40' : 'bg-yellow/20 border-yellow/40';
 
   return (
     <div>
@@ -160,7 +160,7 @@ function ChartPage() {
 
       <div className="text-xl font-bold mb-2">{ticker}</div>
 
-      {err && <div className="bg-red-500/10 border border-red-500 text-red-400 p-3 rounded mb-4">{err}</div>}
+      {err && <div className="bg-red/10 border border-red text-red p-3 rounded mb-4">{err}</div>}
       {loading && <div className="text-muted mb-4">Loading chart...</div>}
 
       <div className="bg-panel border border-border rounded-lg overflow-hidden">
@@ -172,14 +172,14 @@ function ChartPage() {
       {candles.length > 0 && (
         <div className="mt-4 flex items-center gap-3">
           <button onClick={runAnalysis} disabled={aiLoading}
-            className={`px-4 py-2 rounded text-sm font-semibold ${aiLoading ? 'bg-panel border border-border text-muted cursor-wait' : 'bg-purple-600 hover:bg-purple-500 text-white'}`}>
+            className={`px-4 py-2 rounded text-sm font-semibold ${aiLoading ? 'bg-panel border border-border text-muted cursor-wait' : 'bg-accent hover:bg-accent/80 text-bg'}`}>
             {aiLoading ? '⏳ Analysing...' : '🤖 Run AI Analysis'}
           </button>
           {aiLoading && <span className="text-xs text-muted animate-pulse">This takes ~30-60s</span>}
         </div>
       )}
 
-      {aiErr && <div className="bg-red-500/10 border border-red-500 text-red-400 p-3 rounded mt-3">{aiErr}</div>}
+      {aiErr && <div className="bg-red/10 border border-red text-red p-3 rounded mt-3">{aiErr}</div>}
 
       {/* AI Analysis results */}
       {aiData && (
@@ -210,7 +210,7 @@ function ChartPage() {
                 {aiData.zones?.map((z, i) => (
                   <div key={i} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
-                      <span className={z.type === 'support' ? 'text-green-400' : 'text-red-400'}>
+                      <span className={z.type === 'support' ? 'text-green' : 'text-red'}>
                         {z.type === 'support' ? '▼' : '▲'} ${z.price.toFixed(2)}
                       </span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-panel2 text-muted uppercase">{z.source}</span>
@@ -235,7 +235,7 @@ function ChartPage() {
               {aiData.analysis?.risk && (
                 <div>
                   <h3 className="font-semibold mb-1">⚠️ Risk</h3>
-                  <p className="text-sm text-orange-300">{aiData.analysis.risk}</p>
+                  <p className="text-sm text-yellow/70">{aiData.analysis.risk}</p>
                 </div>
               )}
               {/* Trend info */}
@@ -252,7 +252,7 @@ function ChartPage() {
           </div>
 
           {aiData.aiError && (
-            <div className="bg-yellow-500/10 border border-yellow-500/40 text-yellow-300 p-3 rounded text-sm">
+            <div className="bg-yellow/10 border border-yellow/40 text-yellow p-3 rounded text-sm">
               ⚠️ AI narrative unavailable: {aiData.aiError} — showing computed zones only.
             </div>
           )}
@@ -280,7 +280,7 @@ function ChartPage() {
             const first = candles[0].open; const last = candles[candles.length - 1].close;
             const pct = ((last - first) / first * 100);
             return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
-          })()} color={candles[candles.length - 1].close >= candles[0].open ? 'text-green-400' : 'text-red-400'} />
+          })()} color={candles[candles.length - 1].close >= candles[0].open ? 'text-green' : 'text-red'} />
         </div>
       )}
     </div>

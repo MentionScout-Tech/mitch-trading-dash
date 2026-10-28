@@ -92,7 +92,7 @@ export default function GoldPage() {
                 <div className="text-3xl font-mono font-bold text-[#FFD700]">
                   ${price.toFixed(2)}
                 </div>
-                <div className={`text-sm ${(priceChange ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                <div className={`text-sm ${(priceChange ?? 0) >= 0 ? 'text-green' : 'text-red'}`}>
                   {(priceChange ?? 0) >= 0 ? '+' : ''}{priceChange?.toFixed(2)}%
                 </div>
               </>
@@ -120,9 +120,9 @@ export default function GoldPage() {
                 <div key={type} className="bg-[#12121a] border border-[#FFD700]/20 rounded-lg p-4">
                   <h3 className="text-sm font-semibold text-[#FFD700] mb-2">{setupLabels[type] || type}</h3>
                   <div className="flex justify-between text-sm">
-                    <span className="text-green-400">W: {data.wins}</span>
-                    <span className="text-red-400">L: {data.losses}</span>
-                    <span className="text-yellow-400">T: {data.tracking}</span>
+                    <span className="text-green">W: {data.wins}</span>
+                    <span className="text-red">L: {data.losses}</span>
+                    <span className="text-yellow">T: {data.tracking}</span>
                   </div>
                   <div className="mt-2 text-xs text-gray-400">
                     Win Rate: {(data.wins + data.losses) > 0
@@ -175,19 +175,19 @@ export default function GoldPage() {
                         <td className="py-2 px-3 text-gray-400">{s.date_found}</td>
                         <td className="py-2 px-3">{setupLabels[s.setup_type] || s.setup_type}</td>
                         <td className="py-2 px-3">
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${s.direction === 'LONG' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}`}>
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${s.direction === 'LONG' ? 'bg-green/15 text-green' : 'bg-red/15 text-red'}`}>
                             {s.direction}
                           </span>
                         </td>
                         <td className="py-2 px-3 text-right font-mono">${s.price_found.toFixed(2)}</td>
-                        <td className="py-2 px-3 text-right font-mono text-red-400">${s.stop_loss.toFixed(2)}</td>
-                        <td className="py-2 px-3 text-right font-mono text-green-400">${s.take_profit.toFixed(2)}</td>
+                        <td className="py-2 px-3 text-right font-mono text-red">${s.stop_loss.toFixed(2)}</td>
+                        <td className="py-2 px-3 text-right font-mono text-green">${s.take_profit.toFixed(2)}</td>
                         <td className="py-2 px-3 text-center">
-                          <span className={`px-2 py-0.5 rounded text-xs font-bold ${s.result === 'WIN' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}`}>
+                          <span className={`px-2 py-0.5 rounded text-xs font-bold ${s.result === 'WIN' ? 'bg-green/15 text-green' : 'bg-red/15 text-red'}`}>
                             {s.result}
                           </span>
                         </td>
-                        <td className={`py-2 px-3 text-right font-mono ${pl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <td className={`py-2 px-3 text-right font-mono ${pl >= 0 ? 'text-green' : 'text-red'}`}>
                           {pl >= 0 ? '+' : ''}{pl.toFixed(2)}
                         </td>
                       </tr>
@@ -226,7 +226,7 @@ function SignalCard({ signal, setupLabels }: { signal: GoldSignal; setupLabels: 
     <div className="bg-[#12121a] border border-[#FFD700]/30 rounded-lg p-4">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-[#FFD700]/80">{setupLabels[signal.setup_type] || signal.setup_type}</span>
-        <span className={`px-2 py-0.5 rounded text-xs font-medium ${signal.direction === 'LONG' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}`}>
+        <span className={`px-2 py-0.5 rounded text-xs font-medium ${signal.direction === 'LONG' ? 'bg-green/15 text-green' : 'bg-red/15 text-red'}`}>
           {signal.direction}
         </span>
       </div>
@@ -234,11 +234,11 @@ function SignalCard({ signal, setupLabels }: { signal: GoldSignal; setupLabels: 
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div>
           <span className="text-gray-500">Stop:</span>{' '}
-          <span className="text-red-400 font-mono">${signal.stop_loss.toFixed(2)}</span>
+          <span className="text-red font-mono">${signal.stop_loss.toFixed(2)}</span>
         </div>
         <div>
           <span className="text-gray-500">Target:</span>{' '}
-          <span className="text-green-400 font-mono">${signal.take_profit.toFixed(2)}</span>
+          <span className="text-green font-mono">${signal.take_profit.toFixed(2)}</span>
         </div>
       </div>
       <div className="mt-2 text-xs text-gray-400">{signal.trigger}</div>

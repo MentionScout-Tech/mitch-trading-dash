@@ -57,7 +57,7 @@ function strikeStr(trade: Trade): string {
 }
 
 function pnlColor(n: number): string {
-  return n >= 0 ? 'text-green-400' : 'text-red-400';
+  return n >= 0 ? 'text-green' : 'text-red';
 }
 
 /* ── StatCard (matches SPX 0DTE style) ───────────────── */
@@ -325,7 +325,7 @@ export default function TradesPage() {
             onClick={() => setShowForm(!showForm)}
             className={`text-sm px-3 py-1.5 rounded font-semibold ${
               showForm
-                ? 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30'
+                ? 'bg-red/20 text-red border border-red/30 hover:bg-red/30'
                 : 'bg-accent/20 text-accent border border-accent/30 hover:bg-accent/30'
             }`}
           >
@@ -335,7 +335,7 @@ export default function TradesPage() {
       </div>
 
       {err && (
-        <div className="bg-red-500/10 border border-red-500 text-red-400 p-3 rounded mb-4">{err}</div>
+        <div className="bg-red/10 border border-red text-red p-3 rounded mb-4">{err}</div>
       )}
 
       {loading && <div className="text-muted py-8 text-center">Loading trades...</div>}
@@ -354,7 +354,7 @@ export default function TradesPage() {
             <StatCard
               label="Win Rate"
               value={stats.closed > 0 ? `${fmt(stats.winRate, 1)}%` : '—'}
-              color={stats.winRate >= 50 ? 'text-green-400' : stats.closed > 0 ? 'text-red-400' : 'text-text'}
+              color={stats.winRate >= 50 ? 'text-green' : stats.closed > 0 ? 'text-red' : 'text-text'}
               sub={stats.closed > 0 ? `${stats.wins}W / ${stats.closed - stats.wins}L` : 'no closed trades'}
             />
             <StatCard
@@ -366,7 +366,7 @@ export default function TradesPage() {
             <StatCard
               label="Total Premiums"
               value={`$${fmt(stats.totalPremiums)}`}
-              color="text-green-400"
+              color="text-green"
               sub="collected"
             />
             <StatCard
@@ -599,9 +599,9 @@ export default function TradesPage() {
                             isOpen
                               ? ''
                               : pnl && pnl.totalPnl >= 0
-                              ? 'bg-green-500/5'
+                              ? 'bg-green/5'
                               : pnl
-                              ? 'bg-red-500/5'
+                              ? 'bg-red/5'
                               : ''
                           }`}
                         >
@@ -609,7 +609,7 @@ export default function TradesPage() {
                           <td className="py-2 px-2 whitespace-nowrap">{typeLabel(trade.type)}</td>
                           <td className="py-2 px-2 font-mono whitespace-nowrap">{strikeStr(trade)}</td>
                           <td className="py-2 px-2 text-right">{trade.contracts}</td>
-                          <td className="py-2 px-2 text-right font-mono text-green-400">
+                          <td className="py-2 px-2 text-right font-mono text-green">
                             ${fmt(trade.credit)}
                           </td>
                           <td className="py-2 px-2 text-center">
@@ -621,8 +621,8 @@ export default function TradesPage() {
                               <span
                                 className={`text-xs px-2 py-0.5 rounded font-semibold ${
                                   pnl && pnl.totalPnl >= 0
-                                    ? 'bg-green-500/20 text-green-400'
-                                    : 'bg-red-500/20 text-red-400'
+                                    ? 'bg-green/20 text-green'
+                                    : 'bg-red/20 text-red'
                                 }`}
                               >
                                 CLOSED
@@ -656,7 +656,7 @@ export default function TradesPage() {
                                     setClosingTrade(trade);
                                     setCloseExitCost('');
                                   }}
-                                  className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded hover:bg-yellow-500/30"
+                                  className="text-xs bg-yellow/20 text-yellow px-2 py-1 rounded hover:bg-yellow/30"
                                 >
                                   Close
                                 </button>
@@ -669,7 +669,7 @@ export default function TradesPage() {
                               </button>
                               <button
                                 onClick={() => deleteTrade(trade.id)}
-                                className="text-xs bg-red-500/10 text-red-400 px-2 py-1 rounded hover:bg-red-500/20"
+                                className="text-xs bg-red/10 text-red px-2 py-1 rounded hover:bg-red/20"
                               >
                                 ✕
                               </button>
@@ -730,8 +730,8 @@ export default function TradesPage() {
                     <span
                       className={
                         (closingTrade.credit - Number(closeExitCost)) * 100 * closingTrade.contracts >= 0
-                          ? 'text-green-400 font-bold'
-                          : 'text-red-400 font-bold'
+                          ? 'text-green font-bold'
+                          : 'text-red font-bold'
                       }
                     >
                       {(closingTrade.credit - Number(closeExitCost)) * 100 * closingTrade.contracts >= 0
