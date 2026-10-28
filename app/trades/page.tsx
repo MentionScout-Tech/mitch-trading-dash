@@ -49,9 +49,11 @@ function calcPnl(trade: Trade) {
 function strikeStr(trade: Trade): string {
   if (trade.type === 'iron_condor') {
     const s = trade.strikes;
-    return `${s.putShortStrike}P/${s.putLongStrike}P · ${s.callShortStrike}C/${s.callLongStrike}C`;
+    if (!s.putShortStrike && !s.callShortStrike) return '—';
+    return `${s.putShortStrike ?? '—'}P/${s.putLongStrike ?? '—'}P · ${s.callShortStrike ?? '—'}C/${s.callLongStrike ?? '—'}C`;
   }
-  return `${trade.strikes.shortStrike}/${trade.strikes.longStrike}`;
+  if (!trade.strikes.shortStrike && !trade.strikes.longStrike) return '—';
+  return `${trade.strikes.shortStrike ?? '—'}/${trade.strikes.longStrike ?? '—'}`;
 }
 
 function pnlColor(n: number): string {
@@ -144,12 +146,12 @@ export default function TradesPage() {
       const isIC = formType === 'iron_condor';
       const strikes = isIC
         ? {
-            putShortStrike: Number(formPutShort),
-            putLongStrike: Number(formPutLong),
-            callShortStrike: Number(formCallShort),
-            callLongStrike: Number(formCallLong),
+            putShortStrike: formPutShort ? Number(formPutShort) : null,
+            putLongStrike: formPutLong ? Number(formPutLong) : null,
+            callShortStrike: formCallShort ? Number(formCallShort) : null,
+            callLongStrike: formCallLong ? Number(formCallLong) : null,
           }
-        : { shortStrike: Number(formShortStrike), longStrike: Number(formLongStrike) };
+        : { shortStrike: formShortStrike ? Number(formShortStrike) : null, longStrike: formLongStrike ? Number(formLongStrike) : null };
 
       await api('/api/trades', {
         method: 'POST',
@@ -213,12 +215,12 @@ export default function TradesPage() {
       const isIC = editType === 'iron_condor';
       const strikes = isIC
         ? {
-            putShortStrike: Number(editPutShort),
-            putLongStrike: Number(editPutLong),
-            callShortStrike: Number(editCallShort),
-            callLongStrike: Number(editCallLong),
+            putShortStrike: editPutShort ? Number(editPutShort) : null,
+            putLongStrike: editPutLong ? Number(editPutLong) : null,
+            callShortStrike: editCallShort ? Number(editCallShort) : null,
+            callLongStrike: editCallLong ? Number(editCallLong) : null,
           }
-        : { shortStrike: Number(editShortStrike), longStrike: Number(editLongStrike) };
+        : { shortStrike: editShortStrike ? Number(editShortStrike) : null, longStrike: editLongStrike ? Number(editLongStrike) : null };
 
       await api(`/api/trades/${editingTrade.id}`, {
         method: 'PUT',
@@ -444,7 +446,6 @@ export default function TradesPage() {
                         onChange={(e) => setFormPutShort(e.target.value)}
                         placeholder="5700"
                         className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text"
-                        required
                       />
                     </div>
                     <div>
@@ -456,7 +457,6 @@ export default function TradesPage() {
                         onChange={(e) => setFormPutLong(e.target.value)}
                         placeholder="5695"
                         className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text"
-                        required
                       />
                     </div>
                     <div>
@@ -468,7 +468,6 @@ export default function TradesPage() {
                         onChange={(e) => setFormCallShort(e.target.value)}
                         placeholder="5900"
                         className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text"
-                        required
                       />
                     </div>
                     <div>
@@ -480,7 +479,6 @@ export default function TradesPage() {
                         onChange={(e) => setFormCallLong(e.target.value)}
                         placeholder="5905"
                         className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text"
-                        required
                       />
                     </div>
                   </div>
@@ -495,7 +493,6 @@ export default function TradesPage() {
                         onChange={(e) => setFormShortStrike(e.target.value)}
                         placeholder="5700"
                         className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text"
-                        required
                       />
                     </div>
                     <div>
@@ -507,7 +504,6 @@ export default function TradesPage() {
                         onChange={(e) => setFormLongStrike(e.target.value)}
                         placeholder="5695"
                         className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text"
-                        required
                       />
                     </div>
                   </div>
@@ -814,7 +810,6 @@ export default function TradesPage() {
                           value={editPutShort}
                           onChange={(e) => setEditPutShort(e.target.value)}
                           className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text"
-                          required
                         />
                       </div>
                       <div>
@@ -825,7 +820,6 @@ export default function TradesPage() {
                           value={editPutLong}
                           onChange={(e) => setEditPutLong(e.target.value)}
                           className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text"
-                          required
                         />
                       </div>
                       <div>
@@ -836,7 +830,6 @@ export default function TradesPage() {
                           value={editCallShort}
                           onChange={(e) => setEditCallShort(e.target.value)}
                           className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text"
-                          required
                         />
                       </div>
                       <div>
@@ -847,7 +840,6 @@ export default function TradesPage() {
                           value={editCallLong}
                           onChange={(e) => setEditCallLong(e.target.value)}
                           className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text"
-                          required
                         />
                       </div>
                     </div>
@@ -861,7 +853,6 @@ export default function TradesPage() {
                           value={editShortStrike}
                           onChange={(e) => setEditShortStrike(e.target.value)}
                           className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text"
-                          required
                         />
                       </div>
                       <div>
@@ -872,7 +863,6 @@ export default function TradesPage() {
                           value={editLongStrike}
                           onChange={(e) => setEditLongStrike(e.target.value)}
                           className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text"
-                          required
                         />
                       </div>
                     </div>
