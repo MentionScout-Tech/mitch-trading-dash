@@ -130,6 +130,27 @@ export interface Overview {
   recent: any[];
 }
 
+export interface Trade {
+  id: string;
+  date: string;
+  type: string;
+  strikes: {
+    shortStrike?: number;
+    longStrike?: number;
+    putShortStrike?: number;
+    putLongStrike?: number;
+    callShortStrike?: number;
+    callLongStrike?: number;
+  };
+  contracts: number;
+  credit: number;
+  status: 'open' | 'closed';
+  exitCost: number | null;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Quote {
   symbol: string;
   price: number;

@@ -54,6 +54,7 @@ export default function Nav() {
     { href: '/chart', label: 'Charts' },
     // Whales dropdown goes here (rendered separately)
     { href: '/spx-0dte', label: 'SPX 0DTE' },
+    { href: '/trades', label: 'Trades' },
     { href: '/cron-history', label: 'Cron History' },
     { href: '/backtest', label: 'Backtest' },
     { href: '/gold', label: 'Gold' },
