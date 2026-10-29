@@ -351,7 +351,9 @@ export default function WhaleWheelPage() {
     const past: WheelSignal[] = [];
     for (const s of data.signals) {
       const entryMs = new Date(s.entryDate).getTime();
-      if (entryMs > cutoff) active.push(s);
+      // Graduated (hit 10%) → history regardless of age
+      if ((s as any).graduated) past.push(s);
+      else if (entryMs > cutoff) active.push(s);
       else past.push(s);
     }
     active.sort((a, b) => b.score - a.score);
@@ -432,7 +434,10 @@ export default function WhaleWheelPage() {
                     <tr key={s.ticker + s.entryDate + i} className={`border-t border-border hover:bg-panel2/50 ${
                       pnlPct !== null && pnlPct >= 0 ? 'bg-green/5' : pnlPct !== null ? 'bg-red/5' : ''
                     }`}>
-                      <td className="px-3 py-2 font-bold">{s.ticker}</td>
+                      <td className="px-3 py-2 font-bold">
+                        {s.ticker}
+                        {(s as any).graduated && <span className="ml-2 text-[10px] bg-green/20 text-green px-1.5 py-0.5 rounded">🎯 10% hit</span>}
+                      </td>
                       <td className="px-3 py-2 text-muted">{formatDate(s.entryDate)}</td>
                       <td className="px-3 py-2 text-right font-mono">${s.entryPrice.toFixed(2)}</td>
                       <td className="px-3 py-2 text-right font-mono">
