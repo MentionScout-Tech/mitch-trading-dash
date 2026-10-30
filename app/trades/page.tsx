@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useMemo } from 'react';
+import { Fragment, useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, getToken, Trade } from '../../lib/api';
 
@@ -115,6 +115,10 @@ export default function TradesPage() {
   // Close modal
   const [closingTrade, setClosingTrade] = useState<Trade | null>(null);
   const [closeExitCost, setCloseExitCost] = useState('');
+
+  // Day grouping
+  const [collapsedDays, setCollapsedDays] = useState<Record<string, boolean>>({});
+  const [dayComments, setDayComments] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!getToken()) { router.push('/login'); return; }
@@ -275,6 +279,46 @@ export default function TradesPage() {
     if (filter === 'all') return trades;
     return trades.filter((t) => t.status === filter);
   }, [trades, filter]);
+
+  // Load day comments from localStorage
+  useEffect(() => {
+    const comments: Record<string, string> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('trade_day_comment_')) {
+        comments[key.replace('trade_day_comment_', '')] = localStorage.getItem(key) || '';
+      }
+    }
+    setDayComments(comments);
+  }, []);
+
+  const groupedTrades = useMemo(() => {
+    const groups: { date: string; trades: Trade[] }[] = [];
+    const map = new Map<string, Trade[]>();
+    for (const t of filtered) {
+      if (!map.has(t.date)) {
+        map.set(t.date, []);
+        groups.push({ date: t.date, trades: map.get(t.date)! });
+      }
+      map.get(t.date)!.push(t);
+    }
+    return groups;
+  }, [filtered]);
+
+  function isDayCollapsed(date: string, index: number) {
+    if (date in collapsedDays) return collapsedDays[date];
+    return index > 0;
+  }
+
+  function toggleDay(date: string, index: number) {
+    setCollapsedDays(prev => ({ ...prev, [date]: !(prev[date] ?? index > 0) }));
+  }
+
+  function updateDayComment(date: string, comment: string) {
+    setDayComments(prev => ({ ...prev, [date]: comment }));
+    if (comment) localStorage.setItem(`trade_day_comment_${date}`, comment);
+    else localStorage.removeItem(`trade_day_comment_${date}`);
+  }
 
   const stats = useMemo(() => {
     const closed = trades.filter((t) => t.status === 'closed');
@@ -584,7 +628,43 @@ export default function TradesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((trade) => {
+                    {groupedTrades.map((group, gi) => {
+                      const collapsed = isDayCollapsed(group.date, gi);
+                      const dayPnl = group.trades.reduce((sum, t) => { const p = calcPnl(t); return sum + (p ? p.totalPnl : 0); }, 0);
+                      const dayCredit = group.trades.reduce((sum, t) => sum + t.credit * 100 * t.contracts, 0);
+                      const closedInDay = group.trades.filter(t => t.status === 'closed').length;
+                      const dateLabel = new Date(group.date + 'T12:00:00').toLocaleDateString('en-GB', {
+                        weekday: 'short', day: '2-digit', month: 'short', year: '2-digit',
+                      });
+                      return (
+                        <Fragment key={group.date}>
+                          <tr
+                            className="bg-panel2/50 cursor-pointer hover:bg-panel2 select-none"
+                            onClick={() => toggleDay(group.date, gi)}
+                          >
+                            <td colSpan={10} className="py-2 px-2">
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-muted w-4">{collapsed ? '▶' : '▼'}</span>
+                                <span className="text-sm font-semibold">{dateLabel}</span>
+                                <span className="text-xs text-muted">{group.trades.length} trade{group.trades.length !== 1 ? 's' : ''}</span>
+                                {closedInDay > 0 && (
+                                  <span className={`text-xs font-mono font-semibold ${dayPnl >= 0 ? 'text-green' : 'text-red'}`}>
+                                    {dayPnl >= 0 ? '+' : ''}${fmt(dayPnl)}
+                                  </span>
+                                )}
+                                <span className="text-xs text-green font-mono">${fmt(dayCredit)} credit</span>
+                                <input
+                                  type="text"
+                                  value={dayComments[group.date] || ''}
+                                  onChange={(e) => updateDayComment(group.date, e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  placeholder="Day note..."
+                                  className="ml-auto text-xs bg-transparent border-b border-border/50 focus:border-accent outline-none px-1 py-0.5 text-muted max-w-[200px]"
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                          {!collapsed && group.trades.map((trade) => {
                       const pnl = calcPnl(trade);
                       const isOpen = trade.status === 'open';
                       const dateStr = new Date(trade.date).toLocaleDateString('en-GB', {
@@ -676,6 +756,9 @@ export default function TradesPage() {
                             </div>
                           </td>
                         </tr>
+                      );
+                    })}
+                        </Fragment>
                       );
                     })}
                   </tbody>
