@@ -215,7 +215,7 @@ export default function GoldPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+      <div className="min-h-screen bg-bg flex items-center justify-center">
         <div className="text-[#FFD700] text-lg animate-pulse">Loading gold data...</div>
       </div>
     );
@@ -231,13 +231,13 @@ export default function GoldPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-gray-100 p-6">
+    <div className="min-h-screen bg-bg text-text p-6">
       {/* Header with live price */}
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-[#FFD700]">🥇 Gold Day Trading</h1>
-            <p className="text-gray-400 text-sm mt-1">XAU/USD Scanner — 3 Setups</p>
+            <p className="text-muted text-sm mt-1">XAU/USD Scanner — 3 Setups</p>
           </div>
           <div className="text-right">
             {price && (
@@ -270,14 +270,14 @@ export default function GoldPage() {
             <h2 className="text-xl font-semibold text-[#FFD700] mb-4">Setup Breakdown</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {Object.entries(stats.bySetup).map(([type, data]) => (
-                <div key={type} className="bg-[#12121a] border border-[#FFD700]/20 rounded-lg p-4">
+                <div key={type} className="bg-panel border border-yellow/20 rounded-lg p-4">
                   <h3 className="text-sm font-semibold text-[#FFD700] mb-2">{setupLabels[type] || type}</h3>
                   <div className="flex justify-between text-sm">
                     <span className="text-green">W: {data.wins}</span>
                     <span className="text-red">L: {data.losses}</span>
                     <span className="text-yellow">T: {data.tracking}</span>
                   </div>
-                  <div className="mt-2 text-xs text-gray-400">
+                  <div className="mt-2 text-xs text-muted">
                     Win Rate: {(data.wins + data.losses) > 0
                       ? ((data.wins / (data.wins + data.losses)) * 100).toFixed(0)
                       : '—'}%
@@ -307,7 +307,7 @@ export default function GoldPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[#FFD700]/20 text-[#FFD700]/80">
+                  <tr className="border-b border-yellow/20 text-[#FFD700]/80">
                     <th className="text-left py-2 px-3">Date</th>
                     <th className="text-left py-2 px-3">Setup</th>
                     <th className="text-left py-2 px-3">Direction</th>
@@ -324,8 +324,8 @@ export default function GoldPage() {
                       ? (s.direction === 'LONG' ? s.take_profit - s.price_found : s.price_found - s.take_profit)
                       : (s.direction === 'LONG' ? s.stop_loss - s.price_found : s.price_found - s.stop_loss);
                     return (
-                      <tr key={s.id} className="border-b border-gray-800 hover:bg-[#1a1a2e]">
-                        <td className="py-2 px-3 text-gray-400">{s.date_found}</td>
+                      <tr key={s.id} className="border-b border-border hover:bg-panel2">
+                        <td className="py-2 px-3 text-muted">{s.date_found}</td>
                         <td className="py-2 px-3">{setupLabels[s.setup_type] || s.setup_type}</td>
                         <td className="py-2 px-3">
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${s.direction === 'LONG' ? 'bg-green/15 text-green' : 'bg-red/15 text-red'}`}>
@@ -353,7 +353,7 @@ export default function GoldPage() {
         )}
 
         {signals.length === 0 && !gldData && (
-          <div className="text-center py-20 text-gray-500">
+          <div className="text-center py-20 text-muted">
             <div className="text-4xl mb-4">🥇</div>
             <p>No gold signals yet. Scanner runs every 30 min during market hours (07:00-21:00 UTC).</p>
           </div>
@@ -489,8 +489,8 @@ export default function GoldPage() {
 
 function StatCard({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div className="bg-[#12121a] border border-[#FFD700]/20 rounded-lg p-4">
-      <div className="text-xs text-gray-400 mb-1">{label}</div>
+    <div className="bg-panel border border-yellow/20 rounded-lg p-4">
+      <div className="text-xs text-muted mb-1">{label}</div>
       <div className="text-xl font-bold font-mono" style={{ color: color || '#FFD700' }}>
         {value}
       </div>
@@ -500,7 +500,7 @@ function StatCard({ label, value, color }: { label: string; value: string; color
 
 function SignalCard({ signal, setupLabels }: { signal: GoldSignal; setupLabels: Record<string, string> }) {
   return (
-    <div className="bg-[#12121a] border border-[#FFD700]/30 rounded-lg p-4">
+    <div className="bg-panel border border-yellow/30 rounded-lg p-4">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-[#FFD700]/80">{setupLabels[signal.setup_type] || signal.setup_type}</span>
         <span className={`px-2 py-0.5 rounded text-xs font-medium ${signal.direction === 'LONG' ? 'bg-green/15 text-green' : 'bg-red/15 text-red'}`}>
@@ -510,16 +510,16 @@ function SignalCard({ signal, setupLabels }: { signal: GoldSignal; setupLabels: 
       <div className="text-lg font-mono font-bold text-white mb-2">${signal.price_found.toFixed(2)}</div>
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div>
-          <span className="text-gray-500">Stop:</span>{' '}
+          <span className="text-muted">Stop:</span>{' '}
           <span className="text-red font-mono">${signal.stop_loss.toFixed(2)}</span>
         </div>
         <div>
-          <span className="text-gray-500">Target:</span>{' '}
+          <span className="text-muted">Target:</span>{' '}
           <span className="text-green font-mono">${signal.take_profit.toFixed(2)}</span>
         </div>
       </div>
-      <div className="mt-2 text-xs text-gray-400">{signal.trigger}</div>
-      <div className="mt-1 text-xs text-gray-600">{signal.date_found}</div>
+      <div className="mt-2 text-xs text-muted">{signal.trigger}</div>
+      <div className="mt-1 text-xs text-muted">{signal.date_found}</div>
     </div>
   );
 }
