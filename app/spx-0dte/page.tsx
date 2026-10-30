@@ -619,6 +619,124 @@ function HistorySection({ title, entries, showType, contracts }: {
           </table>
         </div>
       </div>
+
+      {/* Scoring Methodology */}
+      <div className="mt-8 border-t border-border pt-6">
+        <h2 className="text-xl font-bold mb-4">📐 How Scoring Works</h2>
+        <p className="text-muted text-sm mb-4">Every signal is scored 0-100. Minimum <span className="text-accent font-semibold">55</span> to alert (credit spreads) or <span className="text-accent font-semibold">65</span> (iron condors). Here's the breakdown:</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* Credit Spread Scoring */}
+          <div className="bg-panel border border-border rounded-lg p-4">
+            <h3 className="font-bold text-accent mb-3">Credit Spread Scoring (0-100)</h3>
+
+            <div className="mb-3">
+              <h4 className="text-sm font-semibold text-green mb-1">💰 Premium Quality (max 30 pts)</h4>
+              <p className="text-xs text-muted mb-1">Credit as % of spread width ($5). Higher = better risk/reward.</p>
+              <div className="text-xs space-y-0.5">
+                <div>≥40% of width → <span className="text-green font-mono">30 pts</span></div>
+                <div>≥35% → <span className="text-green font-mono">28 pts</span></div>
+                <div>≥30% → <span className="text-green font-mono">25 pts</span></div>
+                <div>≥25% → <span className="font-mono">20 pts</span></div>
+                <div>≥20% → <span className="font-mono">15 pts</span></div>
+                <div>≥15% (minimum) → <span className="font-mono">10 pts</span></div>
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <h4 className="text-sm font-semibold text-green mb-1">📏 Distance / Expected Move (max 30 pts)</h4>
+              <p className="text-xs text-muted mb-1">How far the short strike is from SPX price vs expected move. Higher = safer.</p>
+              <div className="text-xs space-y-0.5">
+                <div>≥2.0x expected move → <span className="text-green font-mono">30 pts</span></div>
+                <div>≥1.5x → <span className="text-green font-mono">25 pts</span></div>
+                <div>≥1.2x → <span className="font-mono">20 pts</span></div>
+                <div>≥1.0x → <span className="font-mono">15 pts</span></div>
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <h4 className="text-sm font-semibold text-yellow mb-1">📉 Delta Quality (max 20 pts)</h4>
+              <p className="text-xs text-muted mb-1">Short strike delta — probability of expiring ITM. Sweet spot is 4-8 delta.</p>
+              <div className="text-xs space-y-0.5">
+                <div>4-8 delta (sweet spot) → <span className="text-green font-mono">20 pts</span></div>
+                <div>≤10 delta → <span className="font-mono">15 pts</span></div>
+                <div>{'>'} 10 delta → <span className="font-mono">10 pts</span></div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-yellow mb-1">💧 Liquidity (max 20 pts)</h4>
+              <p className="text-xs text-muted mb-1">Open interest + volume. Better liquidity = tighter fills.</p>
+              <div className="text-xs space-y-0.5">
+                <div>OI ≥500 + Vol ≥100 → <span className="text-green font-mono">20 pts</span></div>
+                <div>OI ≥100 + Vol ≥20 → <span className="font-mono">15 pts</span></div>
+                <div>Meets minimum → <span className="font-mono">10 pts</span></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Iron Condor Scoring */}
+          <div className="bg-panel border border-border rounded-lg p-4">
+            <h3 className="font-bold text-accent mb-3">Iron Condor Scoring (0-100)</h3>
+            <p className="text-xs text-muted mb-3">Only evaluated when market is <span className="font-semibold">neutral/range-bound</span>, VIX ≥16, and trend strength ≤30.</p>
+
+            <div className="mb-3">
+              <h4 className="text-sm font-semibold text-green mb-1">💰 Combined Premium (max 30 pts)</h4>
+              <p className="text-xs text-muted mb-1">Both legs' credit combined as % of width. Min 40%.</p>
+              <div className="text-xs space-y-0.5">
+                <div>≥55% combined → <span className="text-green font-mono">30 pts</span></div>
+                <div>≥45% → <span className="text-green font-mono">25 pts</span></div>
+                <div>≥40% (minimum) → <span className="font-mono">20 pts</span></div>
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <h4 className="text-sm font-semibold text-green mb-1">📏 Both Legs vs Expected Move (max 30 pts)</h4>
+              <p className="text-xs text-muted mb-1">Minimum of both legs' distance from price vs expected move.</p>
+              <div className="text-xs space-y-0.5">
+                <div>Both ≥1.5x EM → <span className="text-green font-mono">30 pts</span></div>
+                <div>Both ≥1.2x → <span className="text-green font-mono">25 pts</span></div>
+                <div>Both ≥1.0x → <span className="font-mono">20 pts</span></div>
+                <div>Both ≥0.8x → <span className="font-mono">10 pts</span></div>
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <h4 className="text-sm font-semibold text-yellow mb-1">⚖️ Delta Balance (max 20 pts)</h4>
+              <p className="text-xs text-muted mb-1">How symmetric the two sides are. Balanced = better.</p>
+              <div className="text-xs space-y-0.5">
+                <div>Delta ratio ≥0.7 → <span className="text-green font-mono">20 pts</span></div>
+                <div>Ratio ≥0.5 → <span className="font-mono">15 pts</span></div>
+                <div>Below 0.5 → <span className="font-mono">10 pts</span></div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-yellow mb-1">💧 Liquidity (max 20 pts)</h4>
+              <div className="text-xs space-y-0.5">
+                <div>Min OI ≥200 → <span className="text-green font-mono">20 pts</span></div>
+                <div>Min OI ≥50 → <span className="font-mono">15 pts</span></div>
+                <div>Below 50 → <span className="font-mono">10 pts</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Scanner Config */}
+        <div className="bg-panel border border-border rounded-lg p-4">
+          <h3 className="font-bold text-accent mb-3">⚙️ Scanner Config</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div><span className="text-muted">Spread Width:</span> <span className="font-mono font-bold">$5</span></div>
+            <div><span className="text-muted">Target Delta:</span> <span className="font-mono font-bold">5-8Δ</span> <span className="text-xs text-muted">(range: 3-20)</span></div>
+            <div><span className="text-muted">Min Credit:</span> <span className="font-mono font-bold">15%</span> <span className="text-xs text-muted">of width</span></div>
+            <div><span className="text-muted">CS Alert:</span> <span className="font-mono font-bold">Score ≥55</span></div>
+            <div><span className="text-muted">IC Alert:</span> <span className="font-mono font-bold">Score ≥65</span></div>
+            <div><span className="text-muted">IC Min VIX:</span> <span className="font-mono font-bold">16</span></div>
+            <div><span className="text-muted">IC Max Trend:</span> <span className="font-mono font-bold">≤30/100</span></div>
+            <div><span className="text-muted">Scan Cutoff:</span> <span className="font-mono font-bold">3:30pm ET</span></div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
