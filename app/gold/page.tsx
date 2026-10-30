@@ -393,21 +393,21 @@ export default function GoldPage() {
             <>
               {/* Live Market Strip */}
               <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
-                <GLDStatCard label="GLD" value={gldData.live.gldPrice ? `$${gldFmt(gldData.live.gldPrice)}` : '—'}
-                  sub={gldData.live.gldChangePct != null ? `${gldData.live.gldChangePct >= 0 ? '+' : ''}${gldFmt(gldData.live.gldChangePct)}%` : undefined}
-                  subColor={gldData.live.gldChangePct != null ? (gldData.live.gldChangePct >= 0 ? 'text-green' : 'text-red') : undefined} />
-                <GLDStatCard label="GVZ" value={gldData.live.gvz ? gldFmt(gldData.live.gvz, 1) : '—'}
-                  sub={gldData.live.gvzChange != null ? `${gldData.live.gvzChange >= 0 ? '+' : ''}${gldFmt(gldData.live.gvzChange, 1)}` : undefined}
-                  subColor={gldData.live.gvzChange != null ? (gldData.live.gvzChange >= 0 ? 'text-red' : 'text-green') : undefined} />
-                <GLDStatCard label="Expected Move" value={gldData.live.expectedMove ? `±$${gldFmt(gldData.live.expectedMove)}` : '—'} />
-                <GLDStatCard label="Bias" value={gldData.live.bias ? `${gldBiasEmoji(gldData.live.bias)} ${gldData.live.bias.toUpperCase()}` : '—'}
-                  color={gldData.live.bias ? gldBiasColor(gldData.live.bias) : undefined} />
-                <GLDStatCard label="Active Signals" value={String(gldData.activeSignals.length)} />
-                <GLDStatCard label="Total Settled" value={String(gldData.settlementHistory.length)} />
+                <GLDStatCard label="GLD" value={gldData.live?.gldPrice ? `$${gldFmt(gldData.live?.gldPrice)}` : '—'}
+                  sub={gldData.live?.gldChangePct != null ? `${gldData.live?.gldChangePct >= 0 ? '+' : ''}${gldFmt(gldData.live?.gldChangePct)}%` : undefined}
+                  subColor={gldData.live?.gldChangePct != null ? (gldData.live?.gldChangePct >= 0 ? 'text-green' : 'text-red') : undefined} />
+                <GLDStatCard label="GVZ" value={gldData.live?.gvz ? gldFmt(gldData.live.gvz, 1) : '—'}
+                  sub={gldData.live?.gvzChange != null ? `${gldData.live?.gvzChange >= 0 ? '+' : ''}${gldFmt(gldData.live?.gvzChange, 1)}` : undefined}
+                  subColor={gldData.live?.gvzChange != null ? (gldData.live?.gvzChange >= 0 ? 'text-red' : 'text-green') : undefined} />
+                <GLDStatCard label="Expected Move" value={gldData.live?.expectedMove ? `±$${gldFmt(gldData.live?.expectedMove)}` : '—'} />
+                <GLDStatCard label="Bias" value={gldData.live?.bias ? `${gldBiasEmoji(gldData.live?.bias)} ${gldData.live?.bias.toUpperCase()}` : '—'}
+                  color={gldData.live?.bias ? gldBiasColor(gldData.live?.bias) : undefined} />
+                <GLDStatCard label="Active Signals" value={String((gldData.activeSignals || []).length)} />
+                <GLDStatCard label="Total Settled" value={String((gldData.settlementHistory || []).length)} />
               </div>
 
               {/* Active Signals Table */}
-              {gldData.activeSignals.length > 0 && (
+              {(gldData.activeSignals || []).length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold mb-3">🔔 Active Signals</h3>
                   <div className="bg-panel border border-border rounded-lg p-4">
@@ -427,7 +427,7 @@ export default function GoldPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {gldData.activeSignals.map((s, i) => {
+                          {(gldData.activeSignals || []).map((s, i) => {
                             const credit = s.type === 'iron_condor' ? s.combinedCredit : s.credit;
                             const delta = s.type === 'iron_condor'
                               ? `${((s.putDelta || 0) * 100).toFixed(0)}/${((s.callDelta || 0) * 100).toFixed(0)}`
@@ -458,7 +458,7 @@ export default function GoldPage() {
               )}
 
               {/* Settlement History */}
-              {gldData.settlementHistory.length > 0 && (
+              {(gldData.settlementHistory || []).length > 0 && (
                 <GLDSettlementSection
                   entries={gldData.settlementHistory}
                   contracts={gldContracts}
@@ -466,7 +466,7 @@ export default function GoldPage() {
                 />
               )}
 
-              {gldData.activeSignals.length === 0 && gldData.settlementHistory.length === 0 && (
+              {(gldData.activeSignals || []).length === 0 && (gldData.settlementHistory || []).length === 0 && (
                 <div className="text-center py-12 text-muted">
                   <div className="text-4xl mb-4">🥇</div>
                   <p>No GLD weekly credit spread signals yet. Scanner analyses GLD options chain for weekly expiries.</p>
