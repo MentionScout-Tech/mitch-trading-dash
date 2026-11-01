@@ -387,6 +387,7 @@ export default function Spx0dtePage() {
                     entries={csHistory}
                     showType={true}
                     contracts={contracts}
+                    showScoring={false}
                   />
                 )}
 
@@ -537,8 +538,8 @@ function StatMini({ label, value }: { label: string; value: string }) {
   );
 }
 
-function HistorySection({ title, entries, showType, contracts }: {
-  title: string; entries: SignalHistoryEntry[]; showType: boolean; contracts: number;
+function HistorySection({ title, entries, showType, contracts, showScoring = true }: {
+  title: string; entries: SignalHistoryEntry[]; showType: boolean; contracts: number; showScoring?: boolean;
 }) {
   const wins = entries.filter(s => s.result === 'win').length;
   const losses = entries.filter(s => s.result === 'loss').length;
@@ -680,7 +681,7 @@ function HistorySection({ title, entries, showType, contracts }: {
       </div>
 
       {/* Scoring Methodology */}
-      <div className="mt-8 border-t border-border pt-6">
+      {showScoring && <div className="mt-8 border-t border-border pt-6">
         <h2 className="text-xl font-bold mb-4">📐 How Scoring Works</h2>
         <p className="text-muted text-sm mb-4">Every signal is scored 0-100. Minimum <span className="text-accent font-semibold">55</span> to alert (credit spreads) or <span className="text-accent font-semibold">65</span> (iron condors). Here's the breakdown:</p>
 
@@ -795,7 +796,7 @@ function HistorySection({ title, entries, showType, contracts }: {
             <div><span className="text-muted">Scan Cutoff:</span> <span className="font-mono font-bold">3:30pm ET</span></div>
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
