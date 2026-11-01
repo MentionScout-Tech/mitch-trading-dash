@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 
@@ -552,6 +552,36 @@ function HistorySection({ title, entries, showType, contracts }: {
   const bestTrade = entries.length > 0 ? Math.max(...entries.map(s => s.pnlPerContract)) : 0;
   const worstTrade = entries.length > 0 ? Math.min(...entries.map(s => s.pnlPerContract)) : 0;
 
+  const [collapsedDays, setCollapsedDays] = useState<Record<string, boolean>>({});
+
+  const groupedEntries = useMemo(() => {
+    const sorted = [...entries].sort((a, b) =>
+      new Date(b.settledAt || b.timestamp).getTime() - new Date(a.settledAt || a.timestamp).getTime()
+    );
+    const groups: { dateKey: string; dateLabel: string; entries: SignalHistoryEntry[] }[] = [];
+    const map = new Map<string, SignalHistoryEntry[]>();
+    for (const s of sorted) {
+      const d = new Date(s.settledAt || s.timestamp);
+      const dateKey = d.toISOString().slice(0, 10);
+      if (!map.has(dateKey)) {
+        map.set(dateKey, []);
+        const dateLabel = d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
+        groups.push({ dateKey, dateLabel, entries: map.get(dateKey)! });
+      }
+      map.get(dateKey)!.push(s);
+    }
+    return groups;
+  }, [entries]);
+
+  function isDayCollapsed(dateKey: string, index: number): boolean {
+    if (dateKey in collapsedDays) return collapsedDays[dateKey];
+    return index > 0;
+  }
+
+  function toggleDay(dateKey: string, index: number) {
+    setCollapsedDays(prev => ({ ...prev, [dateKey]: !(prev[dateKey] ?? index > 0) }));
+  }
+
   return (
     <div className="mb-6">
       <h2 className="text-lg font-semibold mb-3">{title}</h2>
@@ -595,24 +625,53 @@ function HistorySection({ title, entries, showType, contracts }: {
               </tr>
             </thead>
             <tbody>
-              {entries.map((s, i) => {
-                const credit = s.type === 'iron_condor' ? s.combinedCredit : s.credit;
-                const typeLabel = s.type === 'put_credit' ? '🟢 Put CS' : '🔴 Call CS';
-                const dateStr = new Date(s.settledAt || s.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+              {groupedEntries.map((group, gi) => {
+                const collapsed = isDayCollapsed(group.dateKey, gi);
+                const dayWins = group.entries.filter(s => s.result === 'win').length;
+                const dayLosses = group.entries.filter(s => s.result === 'loss').length;
+                const dayPnl = group.entries.reduce((sum, s) => sum + s.pnlPerContract * contracts, 0);
+                const colSpan = showType ? 8 : 7;
                 return (
-                  <tr key={i} className={`text-xs ${resultRowClass(s.result)}`}>
-                    <td className="py-2 px-2 text-muted">{dateStr}</td>
-                    {showType && <td className="py-2 px-2 whitespace-nowrap">{typeLabel}</td>}
-                    <td className="py-2 px-2 font-mono whitespace-nowrap">{strikeDisplay(s)}</td>
-                    <td className="py-2 px-2 text-right font-mono text-green">${fmt(credit)}</td>
-                    <td className="py-2 px-2 text-right font-mono">${fmt(s.spxPrice)}</td>
-                    <td className="py-2 px-2 text-right font-mono">${fmt(s.spxClose)}</td>
-                    <td className="py-2 px-2 text-center">{resultBadge(s.result)}</td>
-                    <td className={`py-2 px-2 text-right font-mono font-semibold ${s.pnlPerContract >= 0 ? 'text-green' : 'text-red'}`}>
-                      {s.pnlPerContract >= 0 ? '+' : ''}{fmt(s.pnlPerContract * contracts)}
-                      {contracts === 1 && <span className="text-muted font-normal"> ({s.pnlPct}%)</span>}
-                    </td>
-                  </tr>
+                  <Fragment key={group.dateKey}>
+                    <tr
+                      className="bg-panel2/50 cursor-pointer hover:bg-panel2 select-none"
+                      onClick={() => toggleDay(group.dateKey, gi)}
+                    >
+                      <td colSpan={colSpan} className="py-2 px-2">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-muted w-4">{collapsed ? '▶' : '▼'}</span>
+                          <span className="text-sm font-semibold">{group.dateLabel}</span>
+                          <span className="text-xs text-muted">
+                            {group.entries.length} trade{group.entries.length !== 1 ? 's' : ''}
+                          </span>
+                          <span className="text-xs text-muted">{dayWins}W / {dayLosses}L</span>
+                          <span className={`text-xs font-mono font-semibold ${dayPnl >= 0 ? 'text-green' : 'text-red'}`}>
+                            {dayPnl >= 0 ? '+' : ''}${fmt(dayPnl)}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                    {!collapsed && group.entries.map((s, i) => {
+                      const credit = s.type === 'iron_condor' ? s.combinedCredit : s.credit;
+                      const typeLabel = s.type === 'put_credit' ? '🟢 Put CS' : '🔴 Call CS';
+                      const dateStr = new Date(s.settledAt || s.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+                      return (
+                        <tr key={i} className={`text-xs ${resultRowClass(s.result)}`}>
+                          <td className="py-2 px-2 text-muted">{dateStr}</td>
+                          {showType && <td className="py-2 px-2 whitespace-nowrap">{typeLabel}</td>}
+                          <td className="py-2 px-2 font-mono whitespace-nowrap">{strikeDisplay(s)}</td>
+                          <td className="py-2 px-2 text-right font-mono text-green">${fmt(credit)}</td>
+                          <td className="py-2 px-2 text-right font-mono">${fmt(s.spxPrice)}</td>
+                          <td className="py-2 px-2 text-right font-mono">${fmt(s.spxClose)}</td>
+                          <td className="py-2 px-2 text-center">{resultBadge(s.result)}</td>
+                          <td className={`py-2 px-2 text-right font-mono font-semibold ${s.pnlPerContract >= 0 ? 'text-green' : 'text-red'}`}>
+                            {s.pnlPerContract >= 0 ? '+' : ''}{fmt(s.pnlPerContract * contracts)}
+                            {contracts === 1 && <span className="text-muted font-normal"> ({s.pnlPct}%)</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </Fragment>
                 );
               })}
             </tbody>
