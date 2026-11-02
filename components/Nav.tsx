@@ -60,6 +60,7 @@ export default function Nav() {
     { href: '/cron-history', label: 'Cron History' },
     { href: '/backtest', label: 'Backtest' },
     { href: '/gold', label: 'Gold' },
+    { href: '/nem', label: 'NEM' },
   ];
 
   // Split links around where Whales goes
