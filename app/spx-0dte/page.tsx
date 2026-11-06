@@ -73,6 +73,7 @@ interface TodaySignal {
 
 interface SignalHistoryEntry {
   key: string;
+  contracts?: number;
   type: string;
   timestamp: string;
   spxPrice: number;
@@ -544,14 +545,17 @@ function HistorySection({ title, entries, showType, contracts, showScoring = tru
   const wins = entries.filter(s => s.result === 'win').length;
   const losses = entries.filter(s => s.result === 'loss').length;
   const partials = entries.filter(s => s.result === 'partial').length;
-  const totalPnl = entries.reduce((sum, s) => sum + s.pnlPerContract, 0);
-  const winTotal = entries.filter(s => s.pnlPerContract > 0).reduce((sum, s) => sum + s.pnlPerContract, 0);
-  const lossTotal = entries.filter(s => s.pnlPerContract < 0).reduce((sum, s) => sum + s.pnlPerContract, 0);
+  // P&L uses each trade's own contract count; older trades without one fall back to the dropdown
+  const sz = (s: SignalHistoryEntry) => s.contracts ?? contracts;
+  const tp = (s: SignalHistoryEntry) => s.pnlPerContract * sz(s);
+  const totalPnl = entries.reduce((sum, s) => sum + tp(s), 0);
+  const winTotal = entries.filter(s => s.pnlPerContract > 0).reduce((sum, s) => sum + tp(s), 0);
+  const lossTotal = entries.filter(s => s.pnlPerContract < 0).reduce((sum, s) => sum + tp(s), 0);
   const winRate = entries.length > 0 ? +((wins / entries.length) * 100).toFixed(1) : 0;
   const credits = entries.map(s => s.type === 'iron_condor' ? (s.combinedCredit || 0) : (s.credit || 0));
   const avgCredit = credits.length > 0 ? credits.reduce((a, b) => a + b, 0) / credits.length : 0;
-  const bestTrade = entries.length > 0 ? Math.max(...entries.map(s => s.pnlPerContract)) : 0;
-  const worstTrade = entries.length > 0 ? Math.min(...entries.map(s => s.pnlPerContract)) : 0;
+  const bestTrade = entries.length > 0 ? Math.max(...entries.map(tp)) : 0;
+  const worstTrade = entries.length > 0 ? Math.min(...entries.map(tp)) : 0;
 
   const [collapsedDays, setCollapsedDays] = useState<Record<string, boolean>>({});
 
@@ -590,24 +594,22 @@ function HistorySection({ title, entries, showType, contracts, showScoring = tru
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-4">
         <StatCard label="Trades" value={String(entries.length)} />
         <StatCard label={`Wins (${wins})`}
-          value={`+$${fmt(winTotal * contracts)}`}
-          color="text-green"
-          sub={contracts > 1 ? `$${fmt(winTotal)}/ct` : undefined} />
+          value={`+$${fmt(winTotal)}`}
+          color="text-green" />
         <StatCard label={`Losses (${losses})`}
-          value={`-$${fmt(Math.abs(lossTotal) * contracts)}`}
-          color="text-red"
-          sub={contracts > 1 ? `-$${fmt(Math.abs(lossTotal))}/ct` : undefined} />
+          value={`-$${fmt(Math.abs(lossTotal))}`}
+          color="text-red" />
         <StatCard label="Net Profit"
-          value={`${totalPnl >= 0 ? '+' : '-'}$${fmt(Math.abs(totalPnl) * contracts)}`}
+          value={`${totalPnl >= 0 ? '+' : '-'}$${fmt(Math.abs(totalPnl))}`}
           color={totalPnl >= 0 ? 'text-green' : 'text-red'}
-          sub={contracts > 1 ? `${totalPnl >= 0 ? '+' : ''}$${fmt(totalPnl)}/ct` : 'per contract'} />
+          sub="at traded size" />
         <StatCard label="Win Rate"
           value={`${winRate}%`}
           color={winRate >= 50 ? 'text-green' : 'text-red'} />
         <StatCard label="Avg Credit" value={`$${fmt(avgCredit * contracts)}`}
           sub={contracts > 1 ? `$${fmt(avgCredit)}/ct` : undefined} />
-        <StatCard label="Best Trade" value={`+$${fmt(bestTrade * contracts)}`} color="text-green" />
-        <StatCard label="Worst Trade" value={`-$${fmt(Math.abs(worstTrade) * contracts)}`} color="text-red" />
+        <StatCard label="Best Trade" value={`+$${fmt(bestTrade)}`} color="text-green" />
+        <StatCard label="Worst Trade" value={`-$${fmt(Math.abs(worstTrade))}`} color="text-red" />
       </div>
 
       <div className="bg-panel border border-border rounded-lg p-4">
@@ -618,6 +620,7 @@ function HistorySection({ title, entries, showType, contracts, showScoring = tru
                 <th className="py-2 px-2">Date</th>
                 {showType && <th className="py-2 px-2">Type</th>}
                 <th className="py-2 px-2">Strikes</th>
+                <th className="py-2 px-2 text-center">Contracts</th>
                 <th className="py-2 px-2 text-right">Credit</th>
                 <th className="py-2 px-2 text-right">SPX @ Alert</th>
                 <th className="py-2 px-2 text-right">SPX Close</th>
@@ -630,8 +633,8 @@ function HistorySection({ title, entries, showType, contracts, showScoring = tru
                 const collapsed = isDayCollapsed(group.dateKey, gi);
                 const dayWins = group.entries.filter(s => s.result === 'win').length;
                 const dayLosses = group.entries.filter(s => s.result === 'loss').length;
-                const dayPnl = group.entries.reduce((sum, s) => sum + s.pnlPerContract * contracts, 0);
-                const colSpan = showType ? 8 : 7;
+                const dayPnl = group.entries.reduce((sum, s) => sum + tp(s), 0);
+                const colSpan = showType ? 9 : 8;
                 return (
                   <Fragment key={group.dateKey}>
                     <tr
@@ -661,13 +664,14 @@ function HistorySection({ title, entries, showType, contracts, showScoring = tru
                           <td className="py-2 px-2 text-muted">{dateStr}</td>
                           {showType && <td className="py-2 px-2 whitespace-nowrap">{typeLabel}</td>}
                           <td className="py-2 px-2 font-mono whitespace-nowrap">{strikeDisplay(s)}</td>
+                          <td className="py-2 px-2 text-center font-mono">{s.contracts != null ? s.contracts : <span className="text-muted">—</span>}</td>
                           <td className="py-2 px-2 text-right font-mono text-green">${fmt(credit)}</td>
                           <td className="py-2 px-2 text-right font-mono">${fmt(s.spxPrice)}</td>
                           <td className="py-2 px-2 text-right font-mono">${fmt(s.spxClose)}</td>
                           <td className="py-2 px-2 text-center">{resultBadge(s.result)}</td>
                           <td className={`py-2 px-2 text-right font-mono font-semibold ${s.pnlPerContract >= 0 ? 'text-green' : 'text-red'}`}>
-                            {s.pnlPerContract >= 0 ? '+' : ''}{fmt(s.pnlPerContract * contracts)}
-                            {contracts === 1 && <span className="text-muted font-normal"> ({s.pnlPct}%)</span>}
+                            {s.pnlPerContract >= 0 ? '+' : ''}{fmt(tp(s))}
+                            {sz(s) === 1 && <span className="text-muted font-normal"> ({s.pnlPct}%)</span>}
                           </td>
                         </tr>
                       );
